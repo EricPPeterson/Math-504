@@ -1,0 +1,147 @@
+##Math 504
+##HW 3
+ 
+##Q 2
+##part d
+require(ggplot2)
+mat <- matrix(data = c(1,7,3,7,4,-5,3,-5,6), nrow = 3, byrow = T)
+a <- ncol(mat)
+vec <- matrix(data = rnorm(a), nrow = 3, byrow = T)
+runs <- 1e3
+ 
+PowerMethod <- function(M,w,n){
+ for (try in 1:n){
+   w.prime <- M %*% w
+   w <- w.prime/sqrt(sum(w.prime^2))
+   } 
+ return(w)
+}
+ 
+##part e
+runs <- seq(from = 10, to = 1000, by = 10)
+pct.diff <- matrix(data = NA, nrow = 3, ncol = length(runs))
+ 
+for (try in 1:length(runs)){
+  pow.meth <- PowerMethod(mat,vec,runs[try])
+  eig <- t(eigen(mat)$vectors[,1])
+  eig <- matrix(data = eig, nrow = 3)
+  pct.diff[,try] <- (abs(eig) - abs(pow.meth))/abs(eig)
+}
+ 
+name <- rep(NA, 100)
+for (j in 1:100){
+  name[j] <- paste(runs[j], "Iterations")
+}
+ 
+colnames(pct.diff) <- c(name)
+ 
+x.plot <- runs[5:100]
+qplot(x = x.plot, y = pct.diff[1,5:100], main = "Percent Difference for Value 1", xlab = "runs", ylab = "Pct Diff")
+ 
+err <- c(1:nrow(mat))
+j <- 1
+tol <- 0.01
+eig_vec <- eigen(mat)
+ 
+ 
+## 2nd method
+while(prod(abs(err) < tol) == 0){
+  
+  err <- abs((PowerMethod(mat,vec,j)/eig_vec$vectors[,abs(eig_vec$values) == max(abs(eig_vec$values))]))-1
+  j = j + 1
+  
+}
+ 
+print (j)
+ 
+ 
+##Q 3
+##part a
+require(igraph)
+require(statnet)
+ 
+##load data
+mis <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW3/lesmis.txt")
+mat <- as.matrix(mis)
+a <- nrow(mis)
+vec <- matrix(data = rnorm(a), nrow = a)
+runs <- 20
+ 
+for (i in 1:77){
+  for (j in 1:77){
+    if((mat[i,j] + mat[j,i]) != 0)
+      mat[i,j] = mat[j,i] = 1
+  }
+}
+ 
+## error check
+err <- c(1:nrow(mat))
+eig_vec <- eigen(mat)
+tol <- 0.01
+j <- 1
+ 
+while(prod(abs(err) < tol) == 0){
+  
+  err <- abs((PowerMethod(mat,vec,j)/eig_vec$vectors[,abs(eig_vec$values) == max(abs(eig_vec$values))]))-1
+  j = j + 1
+  
+}
+print (j)
+## j = 24
+ 
+## this is not a symmetric matrix.  Power method will not work on asymmetric matricies.  The eigenvalues are imaginary.
+ 
+##part c lesmis
+mat_x <- abs(eig_vec$value)
+sort_x <- sort(mat_x , decreasing = T)
+L_max3 <- matrix(c(eig_vec$vector[,mat_x == sort_x[1]], eig_vec$vector[,mat_x == sort_x[2]], eig_vec$vector[,mat_x == sort_x[3]]), ncol =3 )
+ 
+##### color the vertex with different color according to the value of eigenvector
+L_color <- matrix(1,77,3)
+L_color[sign(L_max3) == 1]<-"coral"
+L_color[sign(L_max3) == -1]<-"cadetblue1"
+L_plot = graph.adjacency(mat,mode = "undirected", weighted = NULL,diag = FALSE) 
+plot.igraph(L_plot, vertex.color = L_color[,3])
+ 
+ 
+ 
+ 
+### karate club
+ 
+karate <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW3/zachary.txt")
+mat2 <- as.matrix(karate)
+a <- nrow(karate)
+vec2 <- matrix(data = rnorm(a), nrow = a)
+runs <- 20
+ 
+## error check
+err <- c(1:nrow(mat2))
+eig_vec2 <- eigen(mat2)
+tol <- 0.01
+j <- 1
+ 
+while(prod(abs(err) < tol) == 0){
+  
+  err <- abs((PowerMethod(mat2, vec2, j) / eig_vec2$vectors[,abs(eig_vec2$values) == max(abs(eig_vec2$values))]))-1
+  j = j + 1
+  
+}
+print (j)
+## j = 21
+ 
+ 
+##part c karate
+###find the first 3 maximum eigenvalues and eigenvectors respectively
+mat2_x <- abs(eig_vec2$value)
+sort2_x <- sort(mat2_x, decreasing = TRUE)
+K_max3 <- matrix(c(eig_vec2$vector[,mat2_x == sort2_x[1]], eig_vec2$vector[,mat2_x == sort2_x[2]], eig_vec2$vector[,mat2_x == sort2_x[3]]), ncol = 3)
+ 
+ 
+##### color the vertex with different color according to the value of eigenvector
+K_color = matrix(data = NA, nrow = 34,ncol = 3)
+K_color[sign(K_max3) == 1] <- "coral"
+K_color[sign(K_max3) == -1] <- "cadetblue1"
+ 
+#### graph
+K_plot=graph.adjacency(karate,mode= "undirected", weighted = NULL, diag = FALSE) 
+plot.igraph(K_plot,vertex.color=K_color[,3])
