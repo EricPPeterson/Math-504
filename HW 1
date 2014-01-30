@@ -1,0 +1,436 @@
+##HW 1
+##Math 504
+## Problem 2
+##part a
+ 
+## Van der Waals forces minimization
+## 1/r^12 - 2/r^6
+## d/dx = -12 r^-13 * dr/dx + 12 r^-7 * dr/dx
+require(ggplot2)
+ 
+##set molecules
+m = 3
+ij <- t(combn(3,2))
+ 
+##start points
+m.1 <- c(0,0,0)
+m.2 <- c(2,0,0)
+m.3 <- c(2,2,0)
+mat.mol <- rbind(m.1,m.2,m.3)
+##mat.mol <- matrix(rnorm(30), ncol = 3)
+ 
+##distance function
+dist <- function(molly.1,molly.2){
+  out <- sqrt((molly.1[1] - molly.2[1])^2 + (molly.1[2] - molly.2[2])^2 + (molly.1[3] - molly.2[3])^2)
+  return(out)
+}
+ 
+ 
+##E calc
+E <- function(mat){
+  m <- dim(mat)
+  m <- as.numeric(m[1])
+ 
+  distance <- function(a,b) {
+    r <- sqrt((mat[a,1] - mat[b,1])^2+ (mat[a,2] - mat[b,2])^2 + (mat[a,3] - mat[b,3])^2)
+    return(r)
+  } #the distance between molecules a and b
+  out <- 0
+  for(j in 1:(m - 1)){
+    for(k in (j + 1):m){
+      out <- out + (distance(j,k))^(-12) - 2 * (distance(j,k))^(-6)
+    }
+  }
+  return(out)
+}
+ 
+##derivative function
+ 
+dE <- function(mat){
+  
+  ##distances between molecules
+  r <- rep(NA,nrow(mat))
+  
+  for (j in 1:nrow(mat)){
+    x <- ij[j,]
+    r[j] <- dist(mat[x[1],],mat[x[2],])
+  }
+  
+  r <- c(r,r)
+  r.mat <- matrix(data = r, nrow = 3, byrow = T)
+  
+  ##calc x1-x2, x1-x3, etc.
+  ijj <- cbind(ij[,2],ij[,1])
+  ij.2 <- rbind(ij,ijj)
+  x.dist <- rep(NA, nrow(ij.2))
+  y.dist <- rep(NA, nrow(ij.2))
+  z.dist <- rep(NA, nrow(ij.2))
+  
+  for (k in 1:nrow(ij.2)){
+    x.dist[k] <- mat[ij.2[k,1],1] - mat[ij.2[k,2],1]
+    y.dist[k] <- mat[ij.2[k,1],2] - mat[ij.2[k,2],2]
+    z.dist[k] <- mat[ij.2[k,1],3] - mat[ij.2[k,2],3]
+  }  
+  
+  x.mat <- matrix(data = x.dist, nrow = 3, byrow = T)
+  y.mat <- matrix(data = y.dist, nrow = 3, byrow = T)
+  z.mat <- matrix(data = z.dist, nrow = 3, byrow = T)
+  
+  dX <- function (i) {(-12 * r.mat[i,1]^-14 * x.mat[i,1]) + (12 * r.mat[i,1]^-8 * x.mat[i,1]) - (12 * r.mat[i,2]^-14 * x.mat[i,2]) + (12 * r.mat[i,2]^-8 * x.mat[i,2])}
+  dY <- function (i) {(-12 * r.mat[i,1]^-14 * y.mat[i,1]) + (12 * r.mat[i,1]^-8 * y.mat[i,1]) - (12 * r.mat[i,2]^-14 * y.mat[i,2]) + (12 * r.mat[i,2]^-8 * y.mat[i,2])}
+  dZ <- function (i) {(-12 * r.mat[i,1]^-14 * z.mat[i,1]) + (12 * r.mat[i,1]^-8 * z.mat[i,1]) - (12 * r.mat[i,2]^-14 * z.mat[i,2]) + (12 * r.mat[i,2]^-8 * z.mat[i,2])}  
+  
+  d.x <- sapply(1:nrow(x.mat), dX)
+  d.y <- sapply(1:nrow(y.mat), dY)
+  d.z <- sapply(1:nrow(z.mat), dZ)
+  out <- t(rbind(d.x, d.y, d.z))
+  return(out)
+}
+ 
+ 
+## part b
+runs <- 1e5
+alpha <- 1
+coord <- matrix(data = NA, ncol = 2, nrow = runs)
+colnames(coord) <- c("old.E", "new.E")
+eps <- 1e-4
+ 
+for (d in 1:runs){
+  
+  ##calculate starting energy
+  init.E <- E(mat.mol) 
+  gx <- dE(mat.mol)
+  len <- norm(as.matrix(gx, type = "F"))
+  px <- -gx/len
+  
+  ##create a new point
+  new.mat <- mat.mol + alpha * px
+  new.E <- E(new.mat)
+  
+  ##check new point versus old point
+  while(new.E > init.E){
+    alpha = alpha/2;
+    new.mat <- mat.mol + alpha * px;
+    new.E <- E(new.mat);
+    }
+  
+  ##switch new matrix for old
+  mat.mol <- new.mat
+  alpha = 1;
+  flush.console
+  coord[d,] <- c(init.E, new.E)
+  
+  ## check improvement in energy
+  if(len < eps) {stop("Algo Converged.")}
+  
+}
+ 
+coord <- data.frame(coord[complete.cases(coord),]) 
+tail(coord)
+ 
+w <- 1:nrow(coord)
+Res <- coord[1:nrow(coord),2]
+plot.frame <- data.frame(c(w,Res))
+ 
+qplot(y = Res , x = w, data = plot.frame, main = "Energy Function", ylab = "Energy", xlab = "Runs")
+ 
+ 
+##################################################################
+##################################################################
+##################################################################
+## part c
+## m = 10
+mat.mol <- matrix(rnorm(30), nrow = 10)
+ 
+##E calc
+E <- function(mat){
+  m <- dim(mat)
+  m <- as.numeric(m[1])
+  
+  distance <- function(a,b) {
+    r <- sqrt((mat[a,1] - mat[b,1])^2+ (mat[a,2] - mat[b,2])^2 + (mat[a,3] - mat[b,3])^2)
+    return(r)
+  } #the distance between molecules a and b
+  out <- 0
+  for(j in 1:(m - 1)){
+    for(k in (j + 1):m){
+      out <- out + (distance(j,k))^(-12) - 2 * (distance(j,k))^(-6)
+    }
+  }
+  return(out)
+}
+ 
+##gradient function
+dE <- function(mat, k){
+  m <- dim(mat)
+  m <- as.numeric(m[1]) ## number of molecules
+  pt.1 <- ifelse (k%%3 == 0, k%/%3, k%/%3 + 1) #sets row from inputed matrix
+  pt.2 <- ifelse (k%%3 == 0, 3, k%%3) #sets column from inputed matrix
+  
+  ##distance function
+  dist <- function(a,b){
+    out <- sqrt((mat[a,1] - mat[b,1])^2 + (mat[a,2] - mat[b,2])^2 + (mat[a,3] - mat[b,3])^2)
+    return(out)
+  }
+  
+  total = 0
+  
+  for(j in 1:m){
+    if (j == pt.1){
+      total <- total + 0
+    } else {
+      total <- total + (mat[pt.1,pt.2]-mat[j,pt.2]) * (dist(pt.1,j)^(-8) - dist(pt.1,j)^(-14))
+    }
+    total <- 12 * total  
+  }
+  return(total)
+}
+ 
+grad <- function(mat){ #dE for all points
+  
+  m <- dim(mat)
+  m <- as.numeric(m[1])
+  grad.mat <- matrix(data = NA,nrow = m, ncol = 3)
+  
+  #run algo over all points
+  for (k in 1:(m*3)) {
+    pt.1 <- ifelse(k%%3 == 0, k%/%3, k%/%3 + 1) #the molecule with which the kth coordinate is associated
+    pt.2 <- ifelse (k%%3 == 0, 3, k%%3) #whether the kth coordinate is an x, y, or z
+    grad.mat[pt.1,pt.2] <- dE(mat.mol,k)
+  }
+  return(grad.mat)
+}
+ 
+## part b
+runs <- 1e4
+alpha <- 1
+coord <- matrix(data = NA, ncol = 2, nrow = runs)
+colnames(coord) <- c("old.E", "new.E")
+eps <- 1e-4
+ 
+for (d in 1:runs){
+  
+  ##calculate starting energy
+  init.E <- E(mat.mol) 
+  gx <- grad(mat.mol)
+  len <- norm(as.matrix(gx, type = "F"))
+  px <- -gx/len
+  
+  ##create a new point
+  new.mat <- mat.mol + alpha * px
+  new.E <- E(new.mat)
+  
+  ##check new point versus old point
+  while(new.E > init.E){
+    alpha = alpha/2;
+    new.mat <- mat.mol + alpha * px;
+    new.E <- E(new.mat);
+  }
+  
+  ##switch new matrix for old
+  mat.mol <- new.mat
+  alpha = 1;
+  flush.console
+  coord[d,] <- c(init.E, new.E)
+  
+  ## check improvement in energy
+  if(abs(init.E - new.E) < eps) {stop("Algo Converged.")}
+  cat(d, "\n")
+}
+ 
+coord <- data.frame(coord[complete.cases(coord),]) 
+tail(coord)
+ 
+w <- 1:nrow(coord)
+Res <- coord[1:nrow(coord),2]
+plot.frame <- data.frame(c(w,Res))
+ 
+qplot(y = Res , x = w, data = plot.frame, main = "Energy Function", ylab = "Energy", xlab = "Runs")
+ 
+x <- mat.mol[,1]
+y <- mat.mol[,2]
+plot(x = x, y = y, main = "2-d Plot of Final Configuration")
+ 
+##############################################################################
+##############################################################################
+##############################################################################
+ 
+## problem 3a
+require(ggplot2)
+## model Y = B_1 * X_1 + B_2 + eps
+## eps = Y - B_1 * X_1 - B_2
+p2a <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW1/p2a.csv")
+attach(p2a)
+ 
+## create function for regression
+funky <- function(beta){
+  e <- function(i) {
+    (A3[i] - A1[i] * beta[1] - beta[2])^2
+  }
+  n <- nrow(p2a)
+  out <- sum(sapply(1:n, e))
+  return(out)
+}
+ 
+## derivative functions
+dB <- function(b){
+  out <- rep(NA,2)
+  n <- nrow(p2a)
+  for (j in 1:2){
+    Q <- p2a[,j]
+    if (j == 2){Q = rep(1,n)}
+    N <- function(i) {-2 *  (A3[i] - A1[i] * b[1] - b[2]) * Q[i]
+    }
+    out[j] <- sum(sapply(1:n,N))
+  }
+  
+  return(out)
+}
+ 
+##set starting point and epsilon value
+pt <- c(0,0)
+alpha <- 1
+runs <- 1e6
+eps <- 1e-5
+ 
+## create recepticle for holding values
+points <- matrix(data = NA, nrow = runs, ncol = 8)
+colnames(points) <- c("B1", "B2", "fx_length", "px1", "px2", "Before.Res", "After.Res", "Alpha") 
+ 
+for (i in 1:runs){
+  
+  ## create starting point and initial point for gradient
+  st.pt <- funky(pt)
+  gx <- dB(pt) 
+  len = norm(as.matrix(gx, type = "F"))
+  px = -gx/len
+	
+  ##make a new point to test
+  pt.1 <- pt + alpha * px
+  new.pt <- funky(pt.1)
+  
+  ##test new versus old point
+  while (new.pt > st.pt){
+ 	alpha = alpha/2;
+	pt.1 <- pt + alpha * px;
+	new.pt <- funky(pt.1);
+ }
+ 
+  ## check how much e-squared is being improved
+  if (st.pt - new.pt < eps){stop("Algo Converged")}
+  
+  ## set new point if we have descended
+  pt <- pt.1;
+  points[i,] <- cbind(pt[1], pt[2], len, px[1], px[2], st.pt, new.pt, alpha);
+  alpha = 1;
+  flush.console
+  cat(i, "\n")			
+}
+ 
+points <- data.frame(points[complete.cases(points),]) 
+tail(points)
+ 
+w <- 50:nrow(points)
+Res <- points[50:nrow(points),7]
+plot.frame <- data.frame(c(w,Res))
+ 
+qplot(y = Res , x = w, data = plot.frame, main = "Total Squared Residuals 3a", ylab = "Residuals", xlab = "Runs")
+ 
+z <- 287000:nrow(points)
+Res.2 <- points[287000:nrow(points),7]
+plot.frame <- data.frame(c(z,Res.2))
+ 
+qplot(y = Res.2 , x = z, data = plot.frame, main = "Total Squared Residuals 3a", ylab = "Residuals", xlab = "Runs")
+ 
+ 
+ 
+ 
+## problem 3b
+## model B = B_1 * X_1 + B_2 * X_2 + B_3 * X_3 + B_4 * X_4 + B_5 * X_5 + B_6 * X_6 + B7 + eps
+## eps = B - B_1 * X_1 - B_2 * X_2 - B_3 * X_3 - B_4 * X_4 - B_5 * X_5 - B_6 * X_6 - B7
+ 
+p2b <- read.delim("C:/Users/eric/Desktop/GTown Stats/math 504/HW1/p2b.csv")
+attach(p2b)
+ 
+## create function for regression
+funk <- function(beta){
+  e <- function(i) {
+    (B[i] - A1[i] * beta[1] - A2[i]*beta[2] - A3[i]* beta[3] - A4*beta[4] - A5*beta[5] - A6*beta[6] - beta[7])^2
+  }
+  n <- nrow(p2b)
+  out <- sum(sapply(1:n, e))
+  return(out)
+}
+ 
+## derivative functions
+ 
+dB <- function(b){
+  out <- rep(NA,7)
+  for (j in 1:7){
+  Q <- p2b[,j]
+  if (j == 7){Q = rep(1,nrow(p2b))}
+  N <- function(i) {-2 *  (B[i] - A1[i] * b[1] - A2[i] * b[2] - A3 * b[3] - A4 * b[4] - A5 * b[5] - A6 * b[6] - b[7]) * Q[i]
+  }
+  n <- nrow(p2b)
+  out[j] <- sum(sapply(1:n,N))
+  }
+  
+  return(out)
+}
+ 
+##set starting point and epsilon value
+pt <- c(0,0,0,0,0,0,0)
+alpha <- 1
+runs <- 1e3
+eps <- 1e-10
+ 
+## create recepticle for holding values
+points <- matrix(data = NA, nrow = runs, ncol = 11)
+colnames(points) <- c("B1", "B2", "B3", "B4", "B5", "B6", "B7", "fx_length", "Before.Res", "After.Res", "Alpha") 
+ 
+## loop 
+for (i in 1:runs){
+  
+  ## create starting point and initial point for gradient
+  st.pt <- funk(pt)
+  gx <- dB(pt) 
+  len = norm(as.matrix(gx, type = "F"))
+  px = -gx/len
+  
+  ##make a new point to test
+  pt.1 <- pt + alpha * px
+  new.pt <- funk(pt.1)
+  
+  ##test new versus old point
+  while (new.pt > st.pt){
+    alpha = alpha/2;
+    pt.1 <- pt + alpha * px;
+    new.pt <- funk(pt.1);
+  }
+  
+  ## check how much e-squared is being improved
+  if (st.pt - new.pt < eps){stop("Algo Converged")}
+  
+  ## set new point if we have descended
+  pt <- pt.1;
+  points[i,] <- cbind(pt[1], pt[2], pt[3], pt[4], pt[5], pt[6], pt[7], len, st.pt, new.pt, alpha);
+  alpha = 1;
+  flush.console
+  cat(i, "\n")			
+}
+ 
+points <- data.frame(points[complete.cases(points),]) 
+tail(points)
+ 
+w <- 1:nrow(points)
+Res <- points[1:nrow(points),10]
+plot.frame <- data.frame(c(w,Res))
+ 
+qplot(y = Res , x = w, data = plot.frame, main = "Total Squared Residuals 3b", ylab = "Residuals", xlab = "Runs")
+ 
+ 
+m <- 5:nrow(points)
+Res.3 <- points[5:nrow(points),10]
+plot.frame <- data.frame(c(m,Res.3))
+ 
+qplot(y = Res.3 , x = m, data = plot.frame, main = "Total Squared Residuals 3b", ylab = "Residuals", xlab = "Runs")
