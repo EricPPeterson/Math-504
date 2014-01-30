@@ -1,0 +1,146 @@
+##Math 504
+##HW 2
+##Q 3
+## part a
+##part b and c
+require(MASS)
+require(ggplot2)
+ 
+## grad descent, bisection
+fxy <- function(x, y, sign1 = 2, sign2 = 2){
+  sn <- (-1)^sign1 
+  sn2 <- (-1) ^sign2
+  out <- sn * 20 * x^2 + sn2 * y^2
+  return(out)
+}
+ 
+dxy <- function(x, y, sign1 = 2, sign2 = 2){
+  sn <- (-1) ^sign1
+  sn2 <- (-1) ^sign2
+  dx <- sn * 40 * x
+  dy <- sn2 * 2  * y
+  out <- c(dx,dy)
+  return(out)
+  
+}
+ 
+###function is never negative, but we know
+###there is a root at f(0,0) and that the function is symmetric.
+a <- c(10,10)
+eps <- 1e-10
+x <- fxy(a[1],a[2])
+px <- norm(as.matrix(dxy(a[1],a[2])), type = "F")
+gradx <- -dxy(a[1],a[2])/px
+points <- matrix(data = NA, ncol = 2, nrow = 1e4)
+alpha <- 1
+ 
+while (px > eps){
+  ## old point
+  x <- fxy(a[1],a[2])
+  px <- norm(as.matrix(dxy(a[1],a[2])), type = "F")
+  gx <- -dxy(a[1],a[2])/px
+  
+  ## create new point
+  a.new <- a + alpha * gx
+  x.new <- fxy(a.new[1],a.new[2])
+  
+  ## check if descending
+  while (x.new > x){
+    alpha = alpha/2;
+    a.new <- a + alpha * gx;
+    x.new <- fxy(a.new[1],a.new[2]);
+  }
+  ## set new point if we have descended
+  a <- a.new;
+  points <- rbind(points, a);
+  alpha = 1;
+  flush.console
+}
+ 
+points <- data.frame(points[complete.cases(points),]) 
+tail(points)
+ 
+qplot(x = points[,1], y = points[,2], main= "Steepest Descent", xlab = "X", ylab = "Y")
+ 
+##part b and c
+## newton's method
+hess <- function(x,y,sign1,sign2){
+  sn <- (-1) ^ sign1
+  sn2 <- (-1) ^ sign2
+ 
+  dx.1 <- sn * 40
+  dy.1 <- sn2 * 2
+  out <- matrix(data = c(dx.1,0,0,dy.1), nrow = 2, byrow = T)
+  return(out)
+}
+ 
+##starting point
+##initialize
+## fn = 20 x^2 + y^2
+st.pt <- c(10,10)
+runs <- 10
+points <- matrix(data = NA,nrow = runs, ncol = 3)
+colnames(points) = c("x","y", "result")
+  
+##run algo
+  for (j in 1:runs){
+  points[j,] <- c(st.pt,fxy(st.pt[1],st.pt[2]))
+  
+  gradX <- dxy(st.pt[1],st.pt[2],s1,s2)
+  Hinv <- ginv(hess(st.pt[1],st.pt[2],s1,s2))
+  subt = Hinv %*% gradX
+  new.pt <- st.pt - subt 
+  st.pt <- new.pt
+  }
+ 
+ 
+## in 1 iteration reaches minimum value of zero
+ 
+points <- data.frame(points[complete.cases(points),]) 
+tail(points)
+ 
+##starting point
+##initialize
+## fn = 20 x^2 - y^2
+st.pt <- c(10,10)
+s1 <- 2
+s2 <- 1
+points <- matrix(NA,nrow = runs, ncol = 3)
+colnames(points) = c("x","y", "result")
+ 
+##run algo
+for (j in 1:runs){
+  points[j,] <- c(st.pt,fxy(st.pt[1],st.pt[2], s1,s2))
+  
+  gradX <- dxy(st.pt[1],st.pt[2],s1,s2)
+  Hinv <- ginv(hess(st.pt[1],st.pt[2],s1,s2))
+  subt = Hinv %*% gradX
+  new.pt <- st.pt - subt 
+  st.pt <- new.pt
+}
+ 
+## in 1 iteration reaches minimum value of zero
+ 
+ 
+##starting point
+##initialize
+## fn = -20 x^2 - y^2
+st.pt <- c(10,10)
+s1 <- 1
+s2 <- 1
+ 
+points <- st.pt
+eps <- 1e-7
+ 
+##run algo
+for (j in 1:runs){
+  points[j,] <- c(st.pt,fxy(st.pt[1],st.pt[2], s1,s2))
+  
+  gradX <- dxy(st.pt[1],st.pt[2],s1,s2)
+  Hinv <- ginv(hess(st.pt[1],st.pt[2],s1,s2))
+  subt = Hinv %*% gradX
+  new.pt <- st.pt - subt 
+  st.pt <- new.pt
+}
+ 
+## in 1 iteration reaches minimum value of zero
