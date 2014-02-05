@@ -3,8 +3,12 @@ require(TTR)
 
 # get a dataframe with stock name information
 stocknames <- stockSymbols(exchange="NYSE")
+
+##uses complete cases to get rid of stocks without data in price
 stocknames <- data.frame(stocknames[complete.cases(stocknames),])
 
+## create data frame to hold close prices
+## 252 trading days/year
 stock.prices <- matrix(data = NA, nrow = 252 * 5, ncol = nrow(stocknames))
 colnames(stock.prices) <- t(stocknames[,1])
 
@@ -13,9 +17,11 @@ ClosePrices <- function(Stocks){
   
   for (j in 1:nrow(Stocks)){
     
+    ##downloads prices
     prices <- getYahooData(symbol = stocknames[j,1], start = 20080102, end = 20130102, freq = "daily", type = "price")
     
-    
+    ## checks to make sure there aren't any NAs
+    ## checks to make sure there's a price in every day
     if (nrow(prices) == 252*5){
         close <- as.matrix(prices[,4])
         stock.prices[,j] <- close
@@ -23,8 +29,11 @@ ClosePrices <- function(Stocks){
     cat(j, "\n")
   }
   
+  ## gets rid of colums with NAs for prices
   stock.prices <- as.data.frame(stock.prices)
   st.pr <- stock.prices[,colSums(is.na(stock.prices))<nrow(stock.prices)] 
+  
+  ##adds XOM as first column
   prices <- getYahooData(symbol = "XOM", start = 20080102, end = 20130102, freq = "daily", type = "price")
   close <- as.data.frame(prices[,4])
   colnames(close) <- c("XOM")
