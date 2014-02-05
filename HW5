@@ -1,3 +1,78 @@
+## math 504
+## hw 4
+require(Matrix)
+require(MASS)
+
+##prob 2
+## part b
+options(digits = 16)
+n <- seq(from = 1, to = 17, by = 1)
+a <- 10^n
+theta <- 0
+M <- matrix(data = c(a[1],0,0,1), nrow = 2, ncol = 2)
+y <- M[,1]
+res <- matrix(data = NA, nrow = length(n), ncol = 2)
+a.inv <- matrix(data = NA, nrow = length(n), ncol = 2)
+kappa.def <- matrix(data = NA, nrow = length(n), ncol = 1)
+kappa.func <- matrix(data = NA, nrow = length(n), ncol = 1)
+
+##part i
+for(i in 1:length(n)){
+  
+  M <- matrix(data = c(a[i],0,0,1), nrow = 2, ncol = 2)
+  res[i,] <- solve(M, y, tol = 10^-20)
+  a.inv[i,] <- c(a[i]^-1 * cos(theta), sin(theta))
+  kappa.def[i,] <- abs(max(eigen(M)$values))/abs(min(eigen(M)$values))
+  kappa.func[i,] <- kappa(M)
+  
+  
+}
+
+
+##part ii
+kappa.def
+kappa.func
+
+##part c
+n <- seq(from = 1, to = 17, by = 1)
+a <- 10^n
+theta <- pi/4
+M <- matrix(data = c(a[1],0,0,1), nrow = 2, ncol = 2)
+eig.val <- eigen(M)$values
+D <- Diagonal(n = 2, x = eig.val)
+Q <- matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)), nrow = 2)
+M.1 <- Q %*% D %*% t(Q)
+y <- M[,1]
+res <- matrix(data = NA, nrow = length(n), ncol = 2)
+a.inv <- matrix(data = NA, nrow = length(n), ncol = 2)
+kappa.def <- matrix(data = NA, nrow = length(n), ncol = 1)
+kappa.func <- matrix(data = NA, nrow = length(n), ncol = 1)
+
+##part i
+for(i in 1:length(n)){
+  
+  M <- matrix(data = c(a[i],0,0,1), nrow = 2, ncol = 2)
+  res[i,] <- solve(M, y, tol = 10^-20)
+  a.inv[i,] <- c(a[i]^-1 * cos(theta), sin(theta))
+  kappa.def[i,] <- abs(max(eigen(M)$values))/abs(min(eigen(M)$values))
+  kappa.func[i,] <- kappa(M)
+  
+}
+
+
+
+## problemm 3
+##part a
+mat <- matrix(data = c(1,2,2,1), nrow = 2)
+eig.val <- max(abs(eigen(mat)$values))
+eig.vals <- eigen(mat)$values
+eigen.vecs <- eigen(mat)$vectors
+diag.vals <- Diagonal(n = 2, x = eig.vals)
+any.vec <- matrix(rnorm(6), nrow = 1)
+len.1 <- sqrt(sum((any.vec %*% sym.mat)^2))
+len.2 <- eig.val * sqrt(sum(any.vec)^2)
+len.3 <- sqrt(sum((any.vec %*% diag.vals)^2))
+
 ##problem 5
 require(TTR)
 
@@ -43,4 +118,78 @@ ClosePrices <- function(Stocks){
 
 close.pr <- ClosePrices(stocknames)
 
+prices <- getYahooData(symbol = "WTI", start = 20080102, end = 20130102, freq = "daily", type = "price")
+
 write.csv(x = close.pr, file = "C:/Users/eric/Desktop/GTown Stats/math 504/HW4/close_price.csv")
+
+
+## load data for regression
+close_price <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW4/close_price.csv")
+crude <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW4/crude.csv")
+colnames(close_price[,1]) <- c("Date") 
+a <- as.Date(close_price[,1])
+b <- as.Date(crude[,1])
+
+## check trade dates to be sure theyre the same
+
+check_dates <- rep(NA, length(b))
+for (check in 1:length(b)){
+  if (a[check] == b[check]){
+    check_dates[check] = 0
+  } else {
+    check_dates[check] = 1
+  }
+}
+
+crude <- crude[-1218, ]
+
+
+## had to run twice to remove two dates and now both have 1260 observations
+## and all the dates are the same.
+
+
+##create regression dfs
+ten.stocks <- cbind(close_price[,1], close_price[,2:11])
+hundo.stocks <- cbind(crude$WTI,close_price[,2:101])
+twohundo.stocks <- cbind(crude$WTI,close_price[,2:201])
+threehundo.stocks <- cbind(crude$WTI,close_price[,2:301])
+
+
+## create regressions for each required model
+predictors.10 <- colnames(ten.stocks[c(2:11)])
+response.10 <- colnames(ten.stocks[c(1)])
+lm.ten <- lm(ten.stocks[,response.10] ~., ten.stocks[,predictors.10])
+lm.ten.2 <- anova(lm.ten)
+
+
+predictors.100 <- colnames(hundo.stocks[c(2:101)])
+response.100 <- colnames(hundo.stocks[c(1)])lm.ten <- glm(ten.stocks[,response.10] ~., ten.stocks[,predictors.10], family = "gaussian")
+lm.hunj <- lm(hundo.stocks[,response.100] ~., hundo.stocks[,predictors.100])
+
+predictors.200 <- colnames(twohundo.stocks[c(2:201)])
+response.200 <- colnames(twohundo.stocks[c(1)])
+lm.2hunj <- lm(twohundo.stocks[,response.200] ~., twohundo.stocks[,predictors.200])
+
+predictors.300 <- colnames(threehundo.stocks[c(2:11)])
+response.300 <- colnames(threehundo.stocks[c(1)])
+lm.3hunj <- lm(threehundo.stocks[,response.300] ~., threehundo.stocks[,predictors.300])
+
+
+##create aTa matricies
+aTa.10 <- as.matrix(t(ten.stocks[,2:11])) %*% as.matrix(ten.stocks[,2:11]) 
+aTa.100 <- as.matrix(t(hundo.stocks[,2:101])) %*% as.matrix(hundo.stocks[,2:101])
+aTa.200 <- as.matrix(t(twohundo.stocks[,2:201])) %*% as.matrix(twohundo.stocks[,2:201])
+aTa.300 <- as.matrix(t(threehundo.stocks[,2:301])) %*% as.matrix(threehundo.stocks[,2:301])
+
+##calculate the normal equations
+norm.10 <- ginv(as.matrix(t(ten.stocks[,2:11])) %*% as.matrix(ten.stocks[,2:11])) %*% (as.matrix(t(ten.stocks[,2:11])) %*% as.matrix(ten.stocks[,1]))
+norm.100 <- ginv(as.matrix(t(hundo.stocks[,2:101])) %*% as.matrix(hundo.stocks[,2:101])) %*% (as.matrix(t(hundo.stocks[,2:101])) %*% as.matrix(hundo.stocks[,1])) 
+norm.200 <- ginv(as.matrix(t(twohundo.stocks[,2:201])) %*% as.matrix(twohundo.stocks[,2:201])) %*% (as.matrix(t(twohundo.stocks[,2:201])) %*% as.matrix(twohundo.stocks[,1]))
+norm.300 <- ginv(as.matrix(t(threehundo.stocks[,2:301])) %*% as.matrix(threehundo.stocks[,2:301])) %*% (as.matrix(t(threehundo.stocks[,2:301])) %*% as.matrix(threehundo.stocks[,1]))
+
+
+## condition numbers of matricies
+kappa.10 <- kappa(aTa.10) #[1] 47761.0871980549
+kappa.100 <- kappa(aTa.100) #[1] 4239793.973201738
+kappa.200 <- kappa(aTa.200) #[1] 73077487.36486927
+kappa.300 <- kappa(aTa.300) #[1] 122693107.0928872
