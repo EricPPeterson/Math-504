@@ -2,35 +2,35 @@
 ##Math 504
 ## Problem 2
 ##part a
- 
+
 ## Van der Waals forces minimization
 ## 1/r^12 - 2/r^6
 ## d/dx = -12 r^-13 * dr/dx + 12 r^-7 * dr/dx
 require(ggplot2)
- 
+
 ##set molecules
 m = 3
 ij <- t(combn(3,2))
- 
+
 ##start points
 m.1 <- c(0,0,0)
 m.2 <- c(2,0,0)
 m.3 <- c(2,2,0)
 mat.mol <- rbind(m.1,m.2,m.3)
 ##mat.mol <- matrix(rnorm(30), ncol = 3)
- 
+
 ##distance function
 dist <- function(molly.1,molly.2){
   out <- sqrt((molly.1[1] - molly.2[1])^2 + (molly.1[2] - molly.2[2])^2 + (molly.1[3] - molly.2[3])^2)
   return(out)
 }
- 
- 
+
+
 ##E calc
 E <- function(mat){
   m <- dim(mat)
   m <- as.numeric(m[1])
- 
+
   distance <- function(a,b) {
     r <- sqrt((mat[a,1] - mat[b,1])^2+ (mat[a,2] - mat[b,2])^2 + (mat[a,3] - mat[b,3])^2)
     return(r)
@@ -43,9 +43,9 @@ E <- function(mat){
   }
   return(out)
 }
- 
+
 ##derivative function
- 
+
 dE <- function(mat){
   
   ##distances between molecules
@@ -86,15 +86,15 @@ dE <- function(mat){
   out <- t(rbind(d.x, d.y, d.z))
   return(out)
 }
- 
- 
+
+
 ## part b
 runs <- 1e5
 alpha <- 1
 coord <- matrix(data = NA, ncol = 2, nrow = runs)
 colnames(coord) <- c("old.E", "new.E")
 eps <- 1e-4
- 
+
 for (d in 1:runs){
   
   ##calculate starting energy
@@ -124,24 +124,24 @@ for (d in 1:runs){
   if(len < eps) {stop("Algo Converged.")}
   
 }
- 
+
 coord <- data.frame(coord[complete.cases(coord),]) 
 tail(coord)
- 
+
 w <- 1:nrow(coord)
 Res <- coord[1:nrow(coord),2]
 plot.frame <- data.frame(c(w,Res))
- 
+
 qplot(y = Res , x = w, data = plot.frame, main = "Energy Function", ylab = "Energy", xlab = "Runs")
- 
- 
+
+
 ##################################################################
 ##################################################################
 ##################################################################
 ## part c
 ## m = 10
 mat.mol <- matrix(rnorm(30), nrow = 10)
- 
+
 ##E calc
 E <- function(mat){
   m <- dim(mat)
@@ -159,7 +159,7 @@ E <- function(mat){
   }
   return(out)
 }
- 
+
 ##gradient function
 dE <- function(mat, k){
   m <- dim(mat)
@@ -185,7 +185,7 @@ dE <- function(mat, k){
   }
   return(total)
 }
- 
+
 grad <- function(mat){ #dE for all points
   
   m <- dim(mat)
@@ -200,14 +200,14 @@ grad <- function(mat){ #dE for all points
   }
   return(grad.mat)
 }
- 
+
 ## part b
 runs <- 1e4
 alpha <- 1
 coord <- matrix(data = NA, ncol = 2, nrow = runs)
 colnames(coord) <- c("old.E", "new.E")
 eps <- 1e-4
- 
+
 for (d in 1:runs){
   
   ##calculate starting energy
@@ -237,31 +237,32 @@ for (d in 1:runs){
   if(abs(init.E - new.E) < eps) {stop("Algo Converged.")}
   cat(d, "\n")
 }
- 
+
 coord <- data.frame(coord[complete.cases(coord),]) 
 tail(coord)
- 
+
 w <- 1:nrow(coord)
 Res <- coord[1:nrow(coord),2]
 plot.frame <- data.frame(c(w,Res))
- 
+
 qplot(y = Res , x = w, data = plot.frame, main = "Energy Function", ylab = "Energy", xlab = "Runs")
- 
+
 x <- mat.mol[,1]
 y <- mat.mol[,2]
 plot(x = x, y = y, main = "2-d Plot of Final Configuration")
- 
+
 ##############################################################################
 ##############################################################################
 ##############################################################################
- 
+
 ## problem 3a
 require(ggplot2)
 ## model Y = B_1 * X_1 + B_2 + eps
 ## eps = Y - B_1 * X_1 - B_2
-p2a <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW1/p2a.csv")
+p2a <- read.delim("C:/Users/eric/Desktop/GTown Stats/math 504/HW1/p2b.csv")
+p2s <- cbind(p2a$A1,p2a$A3)
 attach(p2a)
- 
+
 ## create function for regression
 funky <- function(beta){
   e <- function(i) {
@@ -271,7 +272,7 @@ funky <- function(beta){
   out <- sum(sapply(1:n, e))
   return(out)
 }
- 
+
 ## derivative functions
 dB <- function(b){
   out <- rep(NA,2)
@@ -286,17 +287,17 @@ dB <- function(b){
   
   return(out)
 }
- 
+
 ##set starting point and epsilon value
 pt <- c(0,0)
 alpha <- 1
 runs <- 1e6
 eps <- 1e-5
- 
+
 ## create recepticle for holding values
 points <- matrix(data = NA, nrow = runs, ncol = 8)
 colnames(points) <- c("B1", "B2", "fx_length", "px1", "px2", "Before.Res", "After.Res", "Alpha") 
- 
+
 for (i in 1:runs){
   
   ## create starting point and initial point for gradient
@@ -326,32 +327,32 @@ for (i in 1:runs){
   flush.console
   cat(i, "\n")			
 }
- 
+
 points <- data.frame(points[complete.cases(points),]) 
 tail(points)
- 
+
 w <- 50:nrow(points)
 Res <- points[50:nrow(points),7]
 plot.frame <- data.frame(c(w,Res))
- 
+
 qplot(y = Res , x = w, data = plot.frame, main = "Total Squared Residuals 3a", ylab = "Residuals", xlab = "Runs")
- 
+
 z <- 287000:nrow(points)
 Res.2 <- points[287000:nrow(points),7]
 plot.frame <- data.frame(c(z,Res.2))
- 
+
 qplot(y = Res.2 , x = z, data = plot.frame, main = "Total Squared Residuals 3a", ylab = "Residuals", xlab = "Runs")
- 
- 
- 
- 
+
+
+
+
 ## problem 3b
 ## model B = B_1 * X_1 + B_2 * X_2 + B_3 * X_3 + B_4 * X_4 + B_5 * X_5 + B_6 * X_6 + B7 + eps
 ## eps = B - B_1 * X_1 - B_2 * X_2 - B_3 * X_3 - B_4 * X_4 - B_5 * X_5 - B_6 * X_6 - B7
- 
+
 p2b <- read.delim("C:/Users/eric/Desktop/GTown Stats/math 504/HW1/p2b.csv")
 attach(p2b)
- 
+
 ## create function for regression
 funk <- function(beta){
   e <- function(i) {
@@ -361,9 +362,9 @@ funk <- function(beta){
   out <- sum(sapply(1:n, e))
   return(out)
 }
- 
+
 ## derivative functions
- 
+
 dB <- function(b){
   out <- rep(NA,7)
   for (j in 1:7){
@@ -377,17 +378,17 @@ dB <- function(b){
   
   return(out)
 }
- 
+
 ##set starting point and epsilon value
 pt <- c(0,0,0,0,0,0,0)
 alpha <- 1
 runs <- 1e3
 eps <- 1e-10
- 
+
 ## create recepticle for holding values
 points <- matrix(data = NA, nrow = runs, ncol = 11)
 colnames(points) <- c("B1", "B2", "B3", "B4", "B5", "B6", "B7", "fx_length", "Before.Res", "After.Res", "Alpha") 
- 
+
 ## loop 
 for (i in 1:runs){
   
@@ -418,19 +419,19 @@ for (i in 1:runs){
   flush.console
   cat(i, "\n")			
 }
- 
+
 points <- data.frame(points[complete.cases(points),]) 
 tail(points)
- 
+
 w <- 1:nrow(points)
 Res <- points[1:nrow(points),10]
 plot.frame <- data.frame(c(w,Res))
- 
+
 qplot(y = Res , x = w, data = plot.frame, main = "Total Squared Residuals 3b", ylab = "Residuals", xlab = "Runs")
- 
- 
+
+
 m <- 5:nrow(points)
 Res.3 <- points[5:nrow(points),10]
 plot.frame <- data.frame(c(m,Res.3))
- 
+
 qplot(y = Res.3 , x = m, data = plot.frame, main = "Total Squared Residuals 3b", ylab = "Residuals", xlab = "Runs")
