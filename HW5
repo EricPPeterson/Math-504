@@ -1,0 +1,37 @@
+##problem 5
+require(TTR)
+
+# get a dataframe with stock name information
+stocknames <- stockSymbols(exchange="NYSE")
+stocknames <- data.frame(stocknames[complete.cases(stocknames),])
+
+stock.prices <- matrix(data = NA, nrow = 252 * 5, ncol = nrow(stocknames))
+colnames(stock.prices) <- t(stocknames[,1])
+
+
+ClosePrices <- function(Stocks){
+  
+  for (j in 1:nrow(Stocks)){
+    
+    prices <- getYahooData(symbol = stocknames[j,1], start = 20080102, end = 20130102, freq = "daily", type = "price")
+    
+    
+    if (nrow(prices) == 252*5){
+        close <- as.matrix(prices[,4])
+        stock.prices[,j] <- close
+    }
+    cat(j, "\n")
+  }
+  
+  stock.prices <- as.data.frame(stock.prices)
+  st.pr <- stock.prices[,colSums(is.na(stock.prices))<nrow(stock.prices)] 
+  prices <- getYahooData(symbol = "XOM", start = 20080102, end = 20130102, freq = "daily", type = "price")
+  close <- as.data.frame(prices[,4])
+  colnames(close) <- c("XOM")
+  st.pr <- cbind(close,st.pr)
+  return(st.pr)
+}
+
+close.pr <- ClosePrices(stocknames)
+
+write.csv(x = close.pr, file = "C:/Users/eric/Desktop/GTown Stats/math 504/HW4/close_price.csv")
