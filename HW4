@@ -9,57 +9,47 @@ options(digits = 16)
 n <- seq(from = 1, to = 17, by = 1)
 a <- 10^n
 theta <- 0
-M <- matrix(data = c(a[1],0,0,1), nrow = 2, ncol = 2)
-y <- M[,1]
+D <- matrix(data = c(a[1],0,0,1), nrow = 2, ncol = 2)
+Q <- matrix(data = c(cos(theta), sin(theta),-sin(theta),cos(theta)), nrow = 2, ncol = 2)
+Qt <- t(Q)
+M <- Q %*% D %*% Qt
 res <- matrix(data = NA, nrow = length(n), ncol = 2)
-a.inv <- matrix(data = NA, nrow = length(n), ncol = 2)
 kappa.def <- matrix(data = NA, nrow = length(n), ncol = 1)
 kappa.func <- matrix(data = NA, nrow = length(n), ncol = 1)
+
+##part c
+theta <- pi/4
+
+
+##by hand part
+hand <- matrix(data = NA, nrow = 17, ncol = 2)
 
 ##part i
 for(i in 1:length(n)){
   
-  M <- matrix(data = c(a[i],0,0,1), nrow = 2, ncol = 2)
+  ## using solve
+  y <- matrix(data = c(cos(theta), sin(theta)), nrow = 2, ncol = 1)
+  D <- matrix(data = c(a[i],0,0,1), nrow = 2, ncol = 2)
+  M <- Q %*% D %*% Qt
   res[i,] <- solve(M, y, tol = 10^-20)
-  a.inv[i,] <- c(a[i]^-1 * cos(theta), sin(theta))
+  
+  ## by hand
+  x.11 <- cos(theta)^2 + a[i] * sin(theta)^2
+  x.21 <- cos(theta) * sin(theta) - a[i] * cos(theta) * sin(theta)
+  x.12 <- cos(theta) * sin(theta) - a[i] * cos(theta) * sin(theta)
+  x.22 <- a[i] * cos(theta)^2 + sin(theta)^2
+  M.inv <- a[i]^-1 * matrix(data = c(x.11,x.21,x.12,x.22), nrow = 2, ncol = 2)
+  hand[i,] <- M.inv %*% y 
+  
+  ##calc condition numbers
   kappa.def[i,] <- abs(max(eigen(M)$values))/abs(min(eigen(M)$values))
   kappa.func[i,] <- kappa(M)
-  
-  
 }
 
 
 ##part ii
 kappa.def
 kappa.func
-
-##part c
-n <- seq(from = 1, to = 17, by = 1)
-a <- 10^n
-theta <- pi/4
-M <- matrix(data = c(a[1],0,0,1), nrow = 2, ncol = 2)
-eig.val <- eigen(M)$values
-D <- Diagonal(n = 2, x = eig.val)
-Q <- matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)), nrow = 2)
-M.1 <- Q %*% D %*% t(Q)
-y <- M[,1]
-res <- matrix(data = NA, nrow = length(n), ncol = 2)
-a.inv <- matrix(data = NA, nrow = length(n), ncol = 2)
-kappa.def <- matrix(data = NA, nrow = length(n), ncol = 1)
-kappa.func <- matrix(data = NA, nrow = length(n), ncol = 1)
-
-##part i
-for(i in 1:length(n)){
-  
-  M <- matrix(data = c(a[i],0,0,1), nrow = 2, ncol = 2)
-  res[i,] <- solve(M, y, tol = 10^-20)
-  a.inv[i,] <- c(a[i]^-1 * cos(theta), sin(theta))
-  kappa.def[i,] <- abs(max(eigen(M)$values))/abs(min(eigen(M)$values))
-  kappa.func[i,] <- kappa(M)
-  
-}
-
-
 
 ## problemm 3
 ##part a
@@ -122,7 +112,7 @@ prices <- getYahooData(symbol = "WTI", start = 20080102, end = 20130102, freq = 
 
 write.csv(x = close.pr, file = "C:/Users/eric/Desktop/GTown Stats/math 504/HW4/close_price.csv")
 
-
+##part c 
 ## load data for regression
 close_price <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW4/close_price.csv")
 crude <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW4/crude.csv")
@@ -156,24 +146,30 @@ threehundo.stocks <- cbind(crude$WTI,close_price[,2:301])
 
 
 ## create regressions for each required model
+start = Sys.time()
 predictors.10 <- colnames(ten.stocks[c(2:11)])
 response.10 <- colnames(ten.stocks[c(1)])
 lm.ten <- lm(ten.stocks[,response.10] ~., ten.stocks[,predictors.10])
 lm.ten.2 <- anova(lm.ten)
+one = Sys.time() - start
 
-
+start = Sys.time()
 predictors.100 <- colnames(hundo.stocks[c(2:101)])
-response.100 <- colnames(hundo.stocks[c(1)])lm.ten <- glm(ten.stocks[,response.10] ~., ten.stocks[,predictors.10], family = "gaussian")
+response.100 <- colnames(hundo.stocks[c(1)])
 lm.hunj <- lm(hundo.stocks[,response.100] ~., hundo.stocks[,predictors.100])
+two = Sys.time() - start
 
+start = Sys.time()
 predictors.200 <- colnames(twohundo.stocks[c(2:201)])
 response.200 <- colnames(twohundo.stocks[c(1)])
 lm.2hunj <- lm(twohundo.stocks[,response.200] ~., twohundo.stocks[,predictors.200])
+three = Sys.time() - start
 
+start = Sys.time()
 predictors.300 <- colnames(threehundo.stocks[c(2:11)])
 response.300 <- colnames(threehundo.stocks[c(1)])
 lm.3hunj <- lm(threehundo.stocks[,response.300] ~., threehundo.stocks[,predictors.300])
-
+four = Sys.time() - start
 
 ##create aTa matricies
 aTa.10 <- as.matrix(t(ten.stocks[,2:11])) %*% as.matrix(ten.stocks[,2:11]) 
