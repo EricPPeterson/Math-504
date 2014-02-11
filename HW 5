@@ -1,0 +1,41 @@
+##Math 504
+##HW 5
+require(MASS)
+
+## problem 2
+## part a
+
+p2HW5 <- read.delim("C:/Users/eric/Desktop/GTown Stats/math 504/HW1/p2b.csv")
+
+##condition numbers
+kappa.A <- kappa(p2HW5[,1:6]) ##356,598.769
+kappa.ATA <- kappa(as.matrix(t(p2HW5[,1:6])) %*% as.matrix(p2HW5[,1:6]))  #20,863,828,336
+norm.eq <- ginv(as.matrix(t(p2HW5[,1:6])) %*% as.matrix(p2HW5[,1:6])) %*% t(as.matrix(p2HW5[,1:6])) %*% as.matrix(p2HW5[,7])
+
+## using solve
+res <- matrix(data = NA, nrow = 1,ncol = 6)
+M <- as.matrix(t(p2HW5[,1:6])) %*% as.matrix(p2HW5[,1:6])
+y <- as.matrix(t(p2HW5[,1:6])) %*% as.matrix(p2HW5[,7], nrow = 6, ncol = 1)
+solve(a = M, b = y, tol = 1e-30)
+
+
+##part b
+## finding qr, R, and Q matricies
+qr.obj <- qr(as.matrix(p2HW5[,1:6]))
+qr.q <- qr.Q(qr.obj)
+kappa.q <- kappa(qr.q) ## 1.00000000000001
+qr.r <- qr.R(qr.obj)
+kappa.r <- kappa(qr.r) ## 356598.7696
+beta.vec <- ginv(qr.r) %*% t(qr.q) %*% y
+
+##part c
+##using lm to find ans
+pred <- colnames(p2HW5[c(1:6)])
+resp <- colnames(p2HW5[c(7)])
+lm.p2 <- lm(p2HW5[,resp] ~., p2HW5[,pred])
+
+## part d
+kappa.A   ##[1] 356598.7696041531
+kappa.ATA ##[1] 208638283236.2043
+kappa.R <- kappa(qr.r) ##[1] 356598.7696041531
+kappa.Q <- kappa(qr.q) ##1.000000000000001
