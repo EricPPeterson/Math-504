@@ -26,7 +26,7 @@ qr.q <- qr.Q(qr.obj)
 kappa.q <- kappa(qr.q) ## 1.00000000000001
 qr.r <- qr.R(qr.obj)
 kappa.r <- kappa(qr.r) ## 356598.7696
-beta.vec <- ginv(qr.r) %*% t(qr.q) %*% y
+beta.vec <- ginv(qr.r) %*% t(qr.q) %*% as.matrix(p2HW5[,7])
 
 ##part c
 ##using lm to find ans
@@ -40,18 +40,17 @@ kappa.ATA ##[1] 208638283236.2043
 kappa.R <- kappa(qr.r) ##[1] 356598.7696041531
 kappa.Q <- kappa(qr.q) ##1.000000000000001
 
-############################################
-############################################
 ## question 3
 ##part a
+non_linear_1 <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW5/non_linear_1.txt", header=T, quote="\"")
 attach(non_linear_1)
 plot(y = y, x = x, type = "o", main = "Non-Linear Plot Problem 3")
 
 ##part b
-b <- c(1,2,3,4,5,6,7,8)
-
+b <- c(1,2,3,4,5,6,7,8) 
 ##squared error function
 NonLin <- function(beta){
+  e <- 0
   e <- function(i) {(y[i] - beta[1] * exp(-beta[2] * x[i]) + beta[3] * exp(-(x[i] - beta[4])^2/beta[5]^2) + beta[6] * exp((-x[i] - beta[7]^2)/beta[8]^2))^2
   }
   n <- nrow(non_linear_1)
@@ -59,28 +58,32 @@ NonLin <- function(beta){
   return(out)
 }
 
+##gradient function
 grad.NL <- function(X,beta){
   
   #exponent functions
   ex.1 <- exp(-beta[2] * X)
   ex.2 <- exp(-(X - beta[4])^2/beta[5]^2)
-  ex.3 <- exp((-X - beta[7]^2)/beta[8]^2)
+  ex.3 <- exp(-(X - beta[7]^2)/beta[8]^2)
   
   ##vector for gradient
   out <- matrix(data = NA, nrow = 8, ncol = 1)
   
   ## grad components
-  out[1] <- ex.1 
-  out[2] <- -beta[1] * x[i] * ex.1
-  out[3] <- ex.2
-  out[4] <- (2 * beta[3] * (X - beta[4])/beta[5]^2) * ex.2 
-  out[5] <- 2 * beta[3] * exp(-(X - beta[4])^2/beta[5]^3) * ex.2
-  out[6] <- ex.3
-  out[7] <- (2 * beta[6] * (X - beta[7])/beta[8]^2) * ex.3
-  out[8] <- 2 * beta[6] * exp(-(X - beta[7])^2/beta[8]^3) * ex.3
+  out[1,1] <- sum(ex.1) 
+  out[2,1] <- sum(-beta[1] * X * ex.1)
+  out[3,1] <- sum(ex.2)
+  out[4,1] <- sum((2 * beta[3] * (X - beta[4])/beta[5]^2) * ex.2) 
+  out[5,1] <- sum(2 * beta[3] * exp(-(X - beta[4])^2/beta[5]^3) * ex.2)
+  out[6,1] <- sum(ex.3)
+  out[7,1] <- sum((2 * beta[6] * (X - beta[7])/beta[8]^2) * ex.3)
+  out[8,1] <- sum(2 * beta[6] * exp(-(X - beta[7])^2/beta[8]^3) * ex.3)
   
   return(out)
 }
+
+grad.NL(X = y, beta = b)
+
 
 hess.NL <- function(X, beta){
   ##matrix for hessian values
@@ -89,32 +92,36 @@ hess.NL <- function(X, beta){
   ##exponent functions
   ex.1 <- exp(-beta[2] * X)
   ex.2 <- exp(-(X - beta[4])^2/beta[5]^2)
-  ex.3 <- exp((-X - beta[7]^2)/beta[8]^2)
+  ex.3 <- exp(-(X - beta[7]^2)/beta[8]^2)
   
   ## lots of zeroes in this matrix  
   ##rows
-  dE.b1b2 <- -X * ex.1
+  dE.b1b2 <- sum(-X * ex.1)
   out[1,] <- c(0, dE.b1b2,0,0,0,0,0,0)
-  dE.b2b2 <- beta[1] * X^2 * ex.1
+  dE.b2b2 <- sum(beta[1] * X^2 * ex.1)
   out[2,] <- c(dE.b1b2,dE.b2b2,0,0,0,0,0,0)
-  dE.b3b4 <- ex.2 * (2/beta[5]^2) * (X - beta[4])
-  dE.b3b5 <- ex.2 * (2 * (X - beta[4])^2/beta[3]^3)
+  dE.b3b4 <- sum(ex.2 * (2/beta[5]^2) * (X - beta[4]))
+  dE.b3b5 <- sum(ex.2 * (2 * (X - beta[4])^2/beta[3]^3))
   out[3,] <- c(0,0,0,dE.b3b4,dE.b3b5,0,0,0) 
-  dE.b4b4 <- ex.2 * ((4 * beta[3] * (X - beta[4])^2 / (beta[5]^4)) - (2 * beta[3] * (X - beta[4]) / (beta[5]^2)))
-  dE.b4b5 <- ex.2 * ((4 * beta[3] * (X - beta[4])^3 / (beta[5]^5)) - (4 * beta[3] * (X - beta[4])/(beta[5]^3)))
+  dE.b4b4 <- sum(ex.2 * ((4 * beta[3] * (X - beta[4])^2 / (beta[5]^4)) - (2 * beta[3] * (X - beta[4]) / (beta[5]^2))))
+  dE.b4b5 <- sum(ex.2 * ((4 * beta[3] * (X - beta[4])^3 / (beta[5]^5)) - (4 * beta[3] * (X - beta[4])/(beta[5]^3))))
   out[4,] <- c(0,0,dE.b3b4,dE.b4b4,dE.b4b5,0,0,0)
-  dE.b5b5 <- ex.2 * ((4 * beta[3] * (X - beta[4])^4 / (beta[5]^6)) - ((6 * beta[3] * (X - beta[4])^2 / (beta[5]^4))))
+  dE.b5b5 <- sum(ex.2 * ((4 * beta[3] * (X - beta[4])^4 / (beta[5]^6)) - ((6 * beta[3] * (X - beta[4])^2 / (beta[5]^4)))))
   out[5,] <- c(0,0,dE.b3b5,dE.b4b5,dE.b5b5,0,0,0)
-  dE.b6b7 <- ex.3 * (2 * (X - beta[7]) / (beta[8]^2))
-  dE.b6b8 <- ex.3 * (2 * (X - beta[7]) / (beta[8]^2)) * ((X - beta[7]) / beta[8])
+  dE.b6b7 <- sum(ex.3 * (2 * (X - beta[7]) / (beta[8]^2)))
+  dE.b6b8 <- sum(ex.3 * (2 * (X - beta[7]) / (beta[8]^2)) * ((X - beta[7]) / beta[8]))
   out[6,] <- c(0,0,0,0,0,0,dE.b6b7,dE.b6b8)
-  dE.b7b7 <- ex.3 * ((4 * beta[6] * (X - beta[7])^2 / (beta[8]^4)) - (2 * beta[6] * (X - beta[7]) / (beta[8]^2)))
-  dE.b7b8 <- ex.3 * ((4 * beta[6] * (X - beta[7])^3 / (beta[8]^5)) - (4 * beta[6] * (X - beta[7]) / (beta[8]^3)))
+  dE.b7b7 <- sum(ex.3 * ((4 * beta[6] * (X - beta[7])^2 / (beta[8]^4)) - (2 * beta[6] * (X - beta[7]) / (beta[8]^2))))
+  dE.b7b8 <- sum(ex.3 * ((4 * beta[6] * (X - beta[7])^3 / (beta[8]^5)) - (4 * beta[6] * (X - beta[7]) / (beta[8]^3))))
   out[7,] <- c(0,0,0,0,0,0,dE.b7b7,dE.b7b8)
-  dE.b8b8 <- ex.3 * ((4 * beta[6] * (X - beta[7])^4 / (beta[8]^6)) - ((6 * beta[6] * (X - beta[7])^2 / (beta[8]^4))))
+  dE.b8b8 <- sum(ex.3 * ((4 * beta[6] * (X - beta[7])^4 / (beta[8]^6)) - ((6 * beta[6] * (X - beta[7])^2 / (beta[8]^4)))))
   out[8,] <- c(0,0,0,0,0,dE.b6b8,dE.b7b8,dE.b8b8)
   
   return(out)
 }
 
-hess.calc <- hess.NL(beta = b, X = 1)
+grad.calc <- grad.NL(beta = b, X = x)
+hess.calc <- hess.NL(beta = b, X = x)
+
+##part c
+##Newton's Method Calculation
