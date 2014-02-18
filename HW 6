@@ -1,0 +1,38 @@
+##hw 6
+##problem 2
+##part b
+
+n <- 18
+vals <- sample(1:20, n, replace = T)
+m <- matrix(data = vals, nrow = n/3)
+
+GramSchmidt <- function(mat){
+  Q <- matrix(data = NA, nrow = nrow(mat), ncol = ncol(mat))
+  
+  #error checking
+  stopifnot(is.numeric(mat), is.matrix(mat))
+  
+  m <- nrow(mat)
+  n <- ncol(mat)
+  if(m < n){stop. ("Number of Rows must be greater than number of columns.")}
+  
+  ##run algo
+  Q <- matrix(data = 0, nrow = m, ncol = n)
+  R <- matrix(data = 0, nrow = n, ncol = n)
+    
+    for (k in 1:n){
+    Q[,k] <- mat[,k]
+    
+    if (k > 1){
+      for(i in 1:(k - 1)){  
+        R[i,k] <- t(Q[,i]) %*% Q[,k]
+        Q[, k] <- Q[, k] - R[i, k] * Q[, i]
+      }    
+    }
+    R[k, k] <- norm(as.matrix(Q[, k]), type = "F")
+    Q[, k] <- Q[, k]/R[k, k]
+  }
+  return(list (Q = Q, R = R))
+}
+
+m.orth <- GramSchmidt(m)
