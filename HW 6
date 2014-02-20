@@ -2,19 +2,21 @@
 ##problem 2
 ##part b
 
-n <- 18
-vals <- sample(1:20, n, replace = T)
-m <- matrix(data = vals, nrow = n/3)
 
-GramSchmidt <- function(mat){
-  Q <- matrix(data = NA, nrow = nrow(mat), ncol = ncol(mat))
+n <- sample(1:100,2)
+rowz <- max(n)
+colz <- min(n)
+vals <- sample(1:1000, rowz * colz, replace = T)
+m <- matrix(data = vals, nrow = rowz, ncol = colz)
+
+GramSchmidt <- function(mat, tol = 1e-10){
   
   #error checking
   stopifnot(is.numeric(mat), is.matrix(mat))
   
   m <- nrow(mat)
   n <- ncol(mat)
-  if(m < n){stop. ("Number of Rows must be greater than number of columns.")}
+  if(m < n){stop ("Number of Rows must be greater than number of columns.")}
   
   ##run algo
   Q <- matrix(data = 0, nrow = m, ncol = n)
@@ -30,6 +32,10 @@ GramSchmidt <- function(mat){
       }    
     }
     R[k, k] <- norm(as.matrix(Q[, k]), type = "F")
+    
+    ##check for linear dependence. will return zero vector if dependence exists.
+    if(R[k,k] < tol){stop("Check for linear dependence of vectors.")}
+    
     Q[, k] <- Q[, k]/R[k, k]
   }
   return(list (Q = Q, R = R))
