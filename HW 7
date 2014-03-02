@@ -1,0 +1,127 @@
+##Math 504
+##hw 7
+
+##problem 3
+##part a
+non_linear_1 <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW5/non_linear_1.txt", header=T, quote="\"")
+attach(non_linear_1)
+x <- non_linear_1$x
+y <- non_linear_1$y
+options(digits = 16)
+##model
+# f(x,beta) = beta_1 * exp(-beta_2 * X) + beta_3 * exp(-(X - beta_4)^2/beta_5^2) +
+# beta_6 * exp(-(X - beta_7)^2/beta_8^2)
+
+##function f(x,beta)
+f.x.beta <- function(X,beta){
+  out <- (beta[1] * exp(-beta[2] * X)) + (beta[3] * exp(-(X - beta[4])^2/beta[5]^2)) + (beta[6] * exp(-(X - beta[7])^2/beta[8]^2))
+  return(out)  
+}
+
+#squared residualst function E(beta)
+sq.residuals <- function(X,Y,beta){
+  exp.one <-  exp(-beta[2] * X)
+  exp.two <- exp(-(X - beta[4])^2/beta[5]^2)
+  exp.three <- exp(-(X - beta[7])^2/beta[8]^2)
+  sq.r <- sum((Y - beta[1] * exp.one - beta[3] * exp.two - beta[6] * exp.three)^2)
+  return(sq.r)
+}
+
+## derivative of sq. residuals dE/dbeta
+
+dE <- function(X,Y,beta){
+  ## set individual exp components
+  exp.one <-  exp(-beta[2] * X)
+  exp.two <- exp(-(X - beta[4])^2/beta[5]^2)
+  exp.three <- exp(-(X - beta[7])^2/beta[8]^2)
+  
+  ## set the first part of the derivative (for chain rule)
+  root <- 2 * (Y - (beta[1] * exp.one) - (beta[3] * exp.two) - (beta[6] * exp.three)) 
+
+  dE.1 <- sum(root * -exp.one)
+  dE.2 <- sum(root * beta[1] * X * exp.one)
+  dE.3 <- sum(root * -exp.two)
+  dE.4 <- sum(root * beta[3] * exp.two * 2 * (X - beta[4])/beta[5]^2) 
+  dE.5 <- sum(root * beta[3] * exp.two * -2 * (X - beta[4])^2/beta[5]^3)
+  dE.6 <- sum(root * -exp.three)
+  dE.7 <- sum(root * beta[6] * exp.three * 2 * (X - beta[7])/beta[8]^2)
+  dE.8 <- sum(root * beta[6] * exp.three * -2 * (X - beta[7])^2/beta[8]^3) 
+  
+  return(c(dE.1,dE.2,dE.3,dE.4,dE.5,dE.6,dE.7,dE.8))
+}
+  
+##norm function
+l <- function(g){sqrt(sum(g^2))}
+
+#####################################################################################
+##steepest d#########################################################################
+#####################################################################################
+beta.vector <- c(96, .009, 103, 106, 18, 72, 151, 18)
+
+steepest.D <- function(x,y,beta, runs = 1e7, alpha = 1, iter = 1){
+  b <- beta
+  
+  while(iter < runs){
+    ##calc error/gradient/length of gradient
+    E <- sq.residuals(x,y,b)
+    gX <- dE(x,y,b)
+    len <- l(gX) 
+    pX <- -gX/len
+    
+    ##calc new point
+    new.b <- b + alpha * pX
+    new.E <- sq.residuals(x,y,new.b)
+    
+    ##check if descending
+    if(new.E == E){return(list(error.val = E,betas = b))}
+    while(new.E > E){
+      
+      alpha <- alpha/2
+      new.b <- b + alpha * pX
+      new.E <- sq.residuals(x,y,new.b)
+      }
+    
+    b <- new.b
+    iter <- iter + 1
+    E <- new.E
+  }
+  return(list(error.val = E,betas = b))
+}
+
+start.time <- Sys.time()
+res <- steepest.D(x,y,beta.vector, runs = 1e7)
+end.time <- Sys.time()
+run.time <- end.time - start.time
+
+## graphing
+beta.1 <- res$betas
+beta.a <- c(99.018328406, .010994945399, 101.88022528, 107.03095519, 23.578584029, 72.045589471, 153.27010194, 19.525972636)             
+beta.vector <- c(96, .009, 103, 106, 18, 72, 151, 18)
+
+ten.mm <- f.x.beta(x,beta.1)
+start <- f.x.beta(x,beta.vector)
+answer <- f.x.beta(x,beta.a)
+
+plot(ten.mm, type = "l", col = "black", ,lty = 1, main = "NIST data", ylab = "y-value", xlab = "x-value")
+lines(answer, type = "l", col = "red", lty = 2)
+lines(start, type = "l", col = "blue", lty = 3)
+legend("topright", c("calculated betas","start betas", "correct betas"),col=c("black","red","blue"),lty=(c(1,2,3)))
+
+
+##results
+##> run.time
+##Time difference of 8.875914684931438 mins
+##> beta.1 <- res$betas
+##> res
+##$error.val
+##[1] 6378.231213581868
+
+##$betas
+##[1] 9.600454239032675e+01 9.365376775025205e-03 1.030364897151666e+02
+##[4] 1.049906974399438e+02 1.946196805699702e+01 7.205073658869198e+01
+##[7] 1.513066913913171e+02 1.886150198491504e+01
+
+Rprof("my_profiling_file.out")
+steepest.D(x,y,beta.vector, runs = 1e4)
+Rprof(NULL)
+summaryRprof("my_profiling_file.out")$by.total
