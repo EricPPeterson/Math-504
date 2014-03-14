@@ -1,0 +1,188 @@
+##math 504
+##hw 8
+US.Life.Expectancy.2003 <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW8/US Life Expectancy 2003.csv")
+attach(US.Life.Expectancy.2003)
+x <- qx[41:100]
+y <- 40:99
+
+##problem 2
+##part a
+##t equals periods beyond 40 years old (in years) that you would like to check
+##probability of surviving to period t (starting with 40 and on)
+L <- function(t,prob){
+  out <-  prod(1 - prob[1:t]) 
+  return(out)
+}
+
+#########################################################
+dec.out <- seq(from = 1/12, to = 11/12, by = 1/12)
+#create the entire vector to create spline for.
+x.out <- function(i) y[i] + dec.out
+#create matrix of ages
+x.totals <- as.vector(sapply(1:60, x.out))
+
+##create graphs
+i.spline <- spline(y = x, x = y , xout = x.totals)
+L.spline <- splinefun(x = y, y = x, method = "periodic")
+j <- L.spline(x.totals)
+
+plot(x,y,type = "o", main = "Spline Problem 2", col = "green")
+lines(x = i.spline$y,y = i.spline$x, col = "red", lty = 2)
+legend("bottomright", c("Annual Points", "Interpolated Spline"), col = c("green","red"), lty = c(1,2))
+
+plot(x = x.out, y = L.spline(x.out), type = "l", main = "Lspline Plot", col = "blue", lty = 2)
+legend("topleft", c("Interpolated Spline"), col = "blue", lty = 2)
+
+
+#pt = period past 40 you would like to check(to three decimal places)
+year <- 100
+months <- 0
+time.dead <- year + (months/12)
+
+##function starts here....
+##assume payment at first of the month (i.e. .083,0.166...)
+PV <- function (n){
+  #create the granularity desired.
+  dec.out <- seq(from = 1/12, to = 11/12, by = 1/12)
+
+  #create the entire vector to create spline for.
+  x.out <- function(i) y[i] + dec.out
+  #create matrix of ages
+  x.totals <- as.vector(sapply(1:60, x.out))
+
+  ##create spline values
+  i.spline <- as.vector(spline(x = y, y = x, xout = x.totals)$y)
+  spline.matrix <- cbind(x.totals,i.spline)
+
+  ##cut off at desired time
+  x.lines <- which(x.totals <= n)
+  spline.matrix <- spline.matrix[x.lines,]
+  
+  ##probability of payments
+  pay <- function(i) 200 * exp((-.05 * i)/12) 
+  prob.live <- 1 - spline.matrix[,2]
+  out <- sapply(1:length(prob.live), pay) * prob.live
+  
+  return(list(PV = out, live.density = prob.live, death.density = spline.matrix[,2]))
+  }
+
+
+w <- PV(time.dead)$death.density
+plot(density(w), main = "Death Density")
+
+##part b
+plot(PV(n), type = "l", main = "Expected PV", ylab = "Dollar Value", xlab = "Payment Number")
+
+
+################################################################################
+
+##problem 3
+##part a
+require(TTR)
+require(fractalrock)
+
+##function if names given = null##
+ClosePrices <- function(Stocks, startdate = startD, enddate = endD){
+  
+  # get a dataframe with stock name information
+  stocknames <- stockSymbols(exchange = c("NYSE", "NASDAQ"))
+  ##uses complete cases to get rid of stocks without data in price
+  stocknames <- data.frame(stocknames[complete.cases(stocknames),])
+  
+  ##get rid of crappy 5 letter names (all ADRs, etc.)
+  stocks <- nchar(stocknames[,1], type = "chars")
+  stock.list <- which(stocks != 5)
+  stocknames <- stocknames[stock.list,]
+  
+  
+  ##rm CTSH (won't run it for some reason):
+  stocknames <- stocknames[-291,]
+  
+  ## create data frame to hold close prices
+  ## 252 trading days/year, create matrix to hold correct number of trading days
+  prices <- getYahooData(symbol = "DD", start = startD, end = endD, freq = "daily", type = "price")
+  stock.prices <- matrix(data = NA, nrow = nrow(prices), ncol = nrow(stocknames))
+  colnames(stock.prices) <- t(stocknames[,1])
+  
+  for (j in 1:nrow(stocknames)){
+    ##downloads prices
+    prices <- getYahooData(symbol = stocknames[j,1], start = startdate, end = enddate, freq = "daily", type = "price")
+    if(nrow(prices) == nrow(stock.prices)){
+        stock.prices[,j] <- as.matrix(prices[,4])
+      }
+    cat(j, "\n")
+  }
+  stock.prices <- stock.prices[,colSums(is.na(stock.prices))<nrow(stock.prices)]
+  return(stock.prices)
+  }
+
+## function if specific names are inputed##
+Spec.Names <- function(Stocks, startdate = startD, enddate = endD){
+  ## set matrix to hold prices
+  prices <- getYahooData(symbol = "DD", start = startdate, end = enddate, freq = "daily", type = "price")
+  stock.prices <- matrix(data = NA, nrow = nrow(prices), ncol = length(Stocks))
+  colnames(stock.prices) <- c(Stocks)
+  
+  for (j in 1:ncol(stock.prices)){
+    ##downloads prices
+    prices <- getYahooData(symbol = Stocks[j], start = startdate, end = enddate, freq = "daily", type = "price")
+    if(nrow(prices) == nrow(stock.prices)){
+        stock.prices[,j] <- as.matrix(prices[,4])
+      }
+  }
+    cat(j, "\n")
+  
+  stock.prices <- stock.prices[,colSums(is.na(stock.prices)) < nrow(stock.prices)]
+  return(stock.prices)
+  }
+  
+Spec.Names('AA',startD,endD)
+
+## Mu function
+GetMu <- function(stocknames = NULL, startdate = startD, enddate = endD){
+  if (length(stocknames) == 0){
+      ## get all close prices on Nasdaq and NYSE (clear out all bad data, prices, etc.)
+      close.prices <- as.matrix(ClosePrices(stocknames, start = startdate, end = enddate))
+    } else {
+      ## get specific names inputed
+      close.prices <- as.matrix(Spec.Names(stocknames, startdate, enddate))
+    }
+    
+    ##matrix for mu values
+    mu <- NULL
+    weeks <- NULL
+    j = 6
+    i = 1
+  
+    while(j <= nrow(close.prices)){
+      mu <- rbind(mu,(close.prices[j,] - close.prices[(j-5),])/close.prices[(j-5),])
+      weeks <- rbind(weeks, colSums(mu)/i)
+      i = i + 1
+      j = j + 5
+    }
+  mu.weeks <- rep(NA,ncol(close.prices))
+  mu.weeks <- colSums(mu)/dim(mu)[1]
+  return(list(mu = mu, mu.weeks = weeks))
+  }
+
+##run mu function
+mu <- GetMu(c('AA','BA', 'IBM'), startD,endD)
+
+## Sigma function##
+GetSigma <- function(stockNames = NULL, mu = NULL, startdate, enddate){
+  mu  <- GetMu(stocknames = stockNames, startdate = startD, enddate = endD)
+  mu.i <- as.matrix(mu$mu)
+  r.i <- as.matrix(mu$mu.weeks)
+  sig <- diag(length(stockNames))
+  for (i in 1:nrow(sig)){
+    for(j in 1:ncol(sig)){
+      if(i != j){sig[i,j] <- sum((r.i[,i] - mu.i[,i]) * (r.i[,j] - mu.i[,j]))}
+    }
+  }
+  return(sig)
+  }
+
+stockNames = stocknames = c('AMZN', 'AAPL', 'IBM')
+startD = 20130102
+endD = 20140102
+GetSigma(stockNames,startD,endD)
