@@ -1,0 +1,112 @@
+################################################################################
+
+##problem 3
+##part a
+require(TTR)
+require(fractalrock)
+
+##function if names given = null##
+ClosePrices <- function(Stocks, startdate = startD, enddate = endD){
+  
+  # get a dataframe with stock name information
+  stocknames <- stockSymbols(exchange = c("NYSE", "NASDAQ"))
+  ##uses complete cases to get rid of stocks without data in price
+  stocknames <- data.frame(stocknames[complete.cases(stocknames),])
+  
+  ##get rid of crappy 5 letter names (all ADRs, etc.)
+  stocks <- nchar(stocknames[,1], type = "chars")
+  stock.list <- which(stocks != 5)
+  stocknames <- stocknames[stock.list,]
+  
+  
+  ##rm CTSH (won't run it for some reason):
+  stocknames <- stocknames[-291,]
+  
+  ## create data frame to hold close prices
+  ## 252 trading days/year, create matrix to hold correct number of trading days
+  prices <- getYahooData(symbol = "DD", start = startD, end = endD, freq = "daily", type = "price")
+  stock.prices <- matrix(data = NA, nrow = nrow(prices), ncol = nrow(stocknames))
+  colnames(stock.prices) <- t(stocknames[,1])
+  
+  for (j in 1:nrow(stocknames)){
+    ##downloads prices
+    prices <- getYahooData(symbol = stocknames[j,1], start = startdate, end = enddate, freq = "daily", type = "price")
+    if(nrow(prices) == nrow(stock.prices)){
+        stock.prices[,j] <- as.matrix(prices[,4])
+      }
+    cat(j, "\n")
+  }
+  stock.prices <- stock.prices[,colSums(is.na(stock.prices))<nrow(stock.prices)]
+  return(stock.prices)
+  }
+
+## function if specific names are inputed##
+Spec.Names <- function(Stocks, startdate = startD, enddate = endD){
+  ## set matrix to hold prices
+  prices <- getYahooData(symbol = "DD", start = startdate, end = enddate, freq = "daily", type = "price")
+  stock.prices <- matrix(data = NA, nrow = nrow(prices), ncol = length(Stocks))
+  colnames(stock.prices) <- c(Stocks)
+  
+  for (j in 1:ncol(stock.prices)){
+    ##downloads prices
+    prices <- getYahooData(symbol = Stocks[j], start = startdate, end = enddate, freq = "daily", type = "price")
+    if(nrow(prices) == nrow(stock.prices)){
+        stock.prices[,j] <- as.matrix(prices[,4])
+      }
+  }
+    cat(j, "\n")
+  
+  stock.prices <- stock.prices[,colSums(is.na(stock.prices)) < nrow(stock.prices)]
+  return(stock.prices)
+  }
+  
+Spec.Names('AA',startD,endD)
+
+## Mu function
+GetMu <- function(stocknames = NULL, startdate = startD, enddate = endD){
+  if (length(stocknames) == 0){
+      ## get all close prices on Nasdaq and NYSE (clear out all bad data, prices, etc.)
+      close.prices <- as.matrix(ClosePrices(stocknames, start = startdate, end = enddate))
+    } else {
+      ## get specific names inputed
+      close.prices <- as.matrix(Spec.Names(stocknames, startdate, enddate))
+    }
+    
+    ##matrix for mu values
+    mu <- NULL
+    weeks <- NULL
+    j = 6
+    i = 1
+  
+    while(j <= nrow(close.prices)){
+      mu <- rbind(mu,(close.prices[j,] - close.prices[(j-5),])/close.prices[(j-5),])
+      weeks <- rbind(weeks, colSums(mu)/i)
+      i = i + 1
+      j = j + 5
+    }
+  mu.weeks <- rep(NA,ncol(close.prices))
+  mu.weeks <- colSums(mu)/dim(mu)[1]
+  return(list(mu = mu, mu.weeks = weeks))
+  }
+
+##run mu function
+mu <- GetMu(c('AA','BA', 'IBM'), startD,endD)
+
+## Sigma function##
+GetSigma <- function(stockNames = NULL, mu = NULL, startdate, enddate){
+  mu  <- GetMu(stocknames = stockNames, startdate = startD, enddate = endD)
+  mu.i <- as.matrix(mu$mu)
+  r.i <- as.matrix(mu$mu.weeks)
+  sig <- diag(length(stockNames))
+  for (i in 1:nrow(sig)){
+    for(j in 1:ncol(sig)){
+      if(i != j){sig[i,j] <- sum((r.i[,i] - mu.i[,i]) * (r.i[,j] - mu.i[,j]))}
+    }
+  }
+  return(sig)
+  }
+
+stockNames = stocknames = c('AMZN', 'AAPL', 'IBM')
+startD = 20130102
+endD = 20140102
+GetSigma(stockNames,startD,endD)
