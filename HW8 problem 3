@@ -1,5 +1,3 @@
-################################################################################
-
 ##problem 3
 ##part a
 require(TTR)
@@ -79,13 +77,11 @@ GetMu <- function(stocknames = NULL, startdate = startD, enddate = endD){
     i = 1
   
     while(j <= nrow(close.prices)){
-      mu <- rbind(mu,(close.prices[j,] - close.prices[(j-5),])/close.prices[(j-5),])
+      mu <- rbind(mu,((close.prices[j,] - close.prices[(j-5),])/close.prices[(j-5),]))
       weeks <- rbind(weeks, colSums(mu)/i)
       i = i + 1
       j = j + 5
     }
-  mu.weeks <- rep(NA,ncol(close.prices))
-  mu.weeks <- colSums(mu)/dim(mu)[1]
   return(list(mu = mu, mu.weeks = weeks))
   }
 
@@ -100,13 +96,13 @@ GetSigma <- function(stockNames = NULL, mu = NULL, startdate, enddate){
   sig <- diag(length(stockNames))
   for (i in 1:nrow(sig)){
     for(j in 1:ncol(sig)){
-      if(i != j){sig[i,j] <- sum((r.i[,i] - mu.i[,i]) * (r.i[,j] - mu.i[,j]))}
+      if(i != j){sig[i,j] <- length(mu.i)^-1 * sum((r.i[,i] - mu.i[,i]) * (r.i[,j] - mu.i[,j]))}
     }
   }
   return(sig)
   }
 
-stockNames = stocknames = c('AMZN', 'AAPL', 'IBM')
-startD = 20130102
+stockNames = stocknames = c('AMZN', 'AAPL', 'IBM', 'AA', 'GM', 'TXN')
+startD = 20110102
 endD = 20140102
 GetSigma(stockNames,startD,endD)
