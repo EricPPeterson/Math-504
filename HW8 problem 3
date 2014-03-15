@@ -1,3 +1,5 @@
+################################################################################
+
 ##problem 3
 ##part a
 require(TTR)
@@ -96,7 +98,7 @@ GetSigma <- function(stockNames = NULL, mu = NULL, startdate, enddate){
   sig <- diag(length(stockNames))
   for (i in 1:nrow(sig)){
     for(j in 1:ncol(sig)){
-      if(i != j){sig[i,j] <- length(mu.i)^-1 * sum((r.i[,i] - mu.i[,i]) * (r.i[,j] - mu.i[,j]))}
+      sig[i,j] <- length(mu.i)^-1 * sum((r.i[,i] - mu.i[,i]) * (r.i[,j] - mu.i[,j]))
     }
   }
   return(sig)
