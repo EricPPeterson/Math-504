@@ -1,12 +1,5 @@
 ##problem 2
 ##part b
-##math 504
-##hw9
-##problem 2
-BoneMassData <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW9/BoneMassData.txt", header=T, quote="\"")
-male_data <- BoneMassData[BoneMassData[,3]=='male',c(2,4)]
-female_data <- BoneMassData[BoneMassData[,3]=='female',c(2,4)]
-
 
 spliney <- function(beta,x){
   kn <- c(15,20)
@@ -14,8 +7,8 @@ spliney <- function(beta,x){
   h2 <- x^1
   h3 <- x^2
   h4 <- x^3
-  h5 <- (x - kn[1])^3
-  h6 <- (x - kn[2])^3
+  h5 <- max(0,(x - kn[1])^3)
+  h6 <- max(0,(x - kn[2])^3)
   A <- cbind(h1,h2,h3,h4,h5,h6)
   
   B <- matrix(data = NA, nrow = nrow(A), ncol = ncol(A))
@@ -55,17 +48,3 @@ legend("topright", c("Data", "Spline"), col = c("red","black"), lty = c(1,1))
 scatter.smooth(male_data, col = "blue", main = "Male Data", ylab = "Bone Density", xlab = "Age")
 loess.smooth(x = spliney(beta = b.male, x = x.data), y = male_data[,2])
 legend("topright", c("Data", "Spline"), col = c("red","black"), lty = c(1,1))
-
-> fem 
-$minimum [1] 0.371049
-$estimate [1]  0.988870841  0.870251020 -0.110404026  0.003309953 -0.005764320  0.002600863
-$gradient [1] -4.223935e-07 -1.825415e-06  9.687744e-05  4.052755e-03 -1.133109e-04 -5.712486e-04
-$code [1] 2
-$iterations [1] 24
-
-> male 
-$minimum [1] 0.388218
-$estimate [1]  0.988874964  0.870297173 -0.110066827  0.003294850 -0.005756805  0.002678925
-$gradient [1] -1.132444e-06 -8.255528e-06  4.930020e-05  4.013720e-03  4.472725e-05  2.086252e-04
-$code [1] 2
-$iterations [1] 24
