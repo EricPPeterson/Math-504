@@ -1,0 +1,50 @@
+##problem 2
+##part b
+
+spliney <- function(beta,x){
+  kn <- c(15,20)
+  h1 <- x^0
+  h2 <- x^1
+  h3 <- x^2
+  h4 <- x^3
+  h5 <- (x - kn[1])^3
+  h6 <- (x - kn[2])^3
+  A <- cbind(h1,h2,h3,h4,h5,h6)
+  
+  B <- matrix(data = NA, nrow = nrow(A), ncol = ncol(A))
+
+  for(j in 1:ncol(A)){
+    B[,j] <- beta[j] * A[,j]
+  }
+  B <- rowSums(B)
+  return(B)
+  }
+
+x.data <- female_data[,1]
+x.data <- male_data[,1]
+beta.start <- c(rep(1,6))
+spliney(beta.start,x.data)
+##error function
+R <- function(beta){
+  #y <- female_data[,2]
+  y <- male_data[,2]
+  B <- spliney(beta, x.data)
+  r <- sum((y - B)^2)
+  return(r)
+}
+
+beta.start <- c(rep(1,6))
+R(beta.start)
+
+fem <- nlm(R,rep(1,6))
+b.fem <- fem$estimate
+male <- nlm(R,rep(1,6))
+b.male <- male$estimate
+
+scatter.smooth(female_data, col = "red", main = "Female Data", ylab = "Bone Density", xlab = "Age")
+loess.smooth(x = spliney(beta = b.fem, x = x.data), y = female_data[,2])
+legend("topright", c("Data", "Spline"), col = c("red","black"), lty = c(1,1))
+
+scatter.smooth(male_data, col = "blue", main = "Male Data", ylab = "Bone Density", xlab = "Age")
+loess.smooth(x = spliney(beta = b.male, x = x.data), y = male_data[,2])
+legend("topright", c("Data", "Spline"), col = c("red","black"), lty = c(1,1))
