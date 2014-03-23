@@ -7,8 +7,8 @@ female_data <- BoneMassData[BoneMassData[,3]=='female',c(2,4)]
 
 ##part b
 A <- rep(0,4)
-eins <- c(1,15,25,3375,-1,-15,-225,-3375,A)
-zwei <- c(0,1,30,675,0,-1,-225,-675,A)
+eins <- c(1,15,225,3375,-1,-15,-225,-3375,A)
+zwei <- c(0,1,30,675,0,-1,-30,-675,A)
 drei <- c(0,0,2,90,0,0,-2,-90,A)
 vier <- c(A,1,20,400,8000,-1,-20,-400,-8000)
 funf <- c(A,0,1,40,1200,0,-1,-40,-1200)
@@ -16,6 +16,8 @@ sechs <- c(A,0,0,2,120,0,0,-2,-120)
 sieben <- rnorm(72)
 
 M <- matrix(data = c(eins,zwei,drei,vier,funf,sechs),nrow = 12)
+params <- rep(1,12)
+t(M)%*%params #in feasible set
 Z <- matrix(data = c(eins,zwei,drei,vier,funf,sechs,sieben), nrow = 12, ncol = 12)
 QR.mat <- qr(Z)
 Q <- qr.Q(QR.mat)
@@ -63,8 +65,8 @@ R.2 <- function(c){
   return(r)
 }
 
-fem <- nlm(R,rep(-1,6))
-male <- nlm(R.2,rep(-1,6))
+fem <- nlm(R,rep(1,6))
+male <- nlm(R.2,rep(1,6))
 c.fem <- fem$estimate
 c.male <- male$estimate
 
