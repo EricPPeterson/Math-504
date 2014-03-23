@@ -1,0 +1,77 @@
+##math 504
+##hw9
+##problem 2
+BoneMassData <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW9/BoneMassData.txt", header=T, quote="\"")
+male_data <- BoneMassData[BoneMassData[,3]=='male',c(2,4)]
+female_data <- BoneMassData[BoneMassData[,3]=='female',c(2,4)]
+
+##part b
+A <- rep(0,4)
+eins <- c(1,15,25,3375,-1,-15,-225,-3375,A)
+zwei <- c(0,1,30,675,0,-1,-225,-675,A)
+drei <- c(0,0,2,90,0,0,-2,-90,A)
+vier <- c(A,1,20,400,8000,-1,-20,-400,-8000)
+funf <- c(A,0,1,40,1200,0,-1,-40,-1200)
+sechs <- c(A,0,0,2,120,0,0,-2,-120)
+sieben <- rnorm(72)
+
+M <- matrix(data = c(eins,zwei,drei,vier,funf,sechs),nrow = 12)
+Z <- matrix(data = c(eins,zwei,drei,vier,funf,sechs,sieben), nrow = 12, ncol = 12)
+QR.mat <- qr(Z)
+Q <- qr.Q(QR.mat)
+
+write.csv(x = Q, file = "C:/Users/eric/Desktop/GTown Stats/math 504/HW9/QMatrix.csv")
+
+##part c
+##inputs
+Q <- Q[,7:12]
+Zbar <- rep(1,12)
+kn <- c(15,20)
+
+##phi func
+phi <- function(c){Zbar + rowSums(t(c * t(Q)))}
+
+##spline func
+S <- function(c,x){
+  
+  s <- NULL
+  z <- phi(c)
+  
+  for (i in 1:nrow(x)){
+    if (x[i,1] < kn[1]){
+      s[i] <- sum(rep(x[i,1],4)^c(0:3) * z[1:4])
+    }
+    if (x[i,1] >= kn[1] & x[i,1] < kn[2]){
+      s[i] <- sum(rep(x[i,1],4)^c(0:3) * z[5:8])
+    } else {
+      s[i] <- sum(rep(x[i,1],4)^c(0:3) * z[9:12])
+    }
+  }
+  return(s)
+}
+
+##error function
+R <- function(c){
+  y <- female_data[,2]
+  r <- sum((y - S(c,female_data))^2)
+  return(r)
+}
+
+R.2 <- function(c){
+  y <- male_data[,2]
+  r <- sum((y - S(c,male_data))^2)
+  return(r)
+}
+
+fem <- nlm(R,rep(-1,6))
+male <- nlm(R.2,rep(-1,6))
+c.fem <- fem$estimate
+c.male <- male$estimate
+
+scatter.smooth(male_data, col = "blue", main = "Male Data", ylab = "Bone Density", xlab = "Age")
+loess.smooth(x = S(c = male$estimate, x = male_data), y = male_data[,2])
+legend("topright", c("Data", "Interpolated Spline"), col = c("blue","black"), lty = c(1,1))
+
+scatter.smooth(female_data, col = "red", main = "Female Data", ylab = "Bone Density", xlab = "Age")
+loess.smooth(x = S(c = female$estimate, x = female_data), y = female_data[,2])
+legend("topright", c("Data", "Interpolated Spline"), col = c("red","black"), lty = c(1,1))
