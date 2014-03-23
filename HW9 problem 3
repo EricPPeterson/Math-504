@@ -1,0 +1,81 @@
+##problem 3
+knots <- max(female_data[,1])/20
+n <- 1:20
+
+##function to create hockey stick splines for 20 knots
+A.rows <- function(n,x) {
+  l <- knots * n
+  hstick <- matrix(data = NA, nrow = length(x), ncol = length(l))
+  
+  for(j in 1:length(l)){
+    hstick[,j] <- ifelse(x > l[j],(x-l[j])^3,0) 
+  }
+  
+  return(hstick)
+}
+
+
+## set A matrix
+splinez <- function(beta,x){
+  h <- cbind(x^0,x^1,x^2,x^3,A.rows(n,female_data[,1]))
+  
+  B <- matrix(data = NA, nrow = nrow(h), ncol = ncol(h))
+  
+  for(j in 1:ncol(h)){
+    B[,j] <- beta[j] * h[,j]
+  }
+  B <- rowSums(B)
+  return(B)
+}
+
+beta.start <- c(rep(1,24))
+x <- female_data[,1]
+splinez(beta.start,x)
+
+lam <- 0.01; beta.start <- c(rep(1,24)); x.data <- female_data[,1]
+penner(beta.start,x.data,lam)
+
+##error function
+R <- function(beta){
+  h <- cbind(0,0,2,6*x,6*A.rows(n,female_data[,1]))
+  ma <- max(female_data[,1])
+  mi <- min(female_data[,1])
+  vals <- rep(NA,24)
+  x.data <- female_data[,1]
+  y <- female_data[,2]
+  
+  for(j in 1:ncol(h)){
+    vals[j] <- sum((beta[j] * h[,j])^2)
+  }
+  
+  vals <- sum(vals)
+  pen <- lambda * (ma * vals - mi * vals)
+  
+  B <- splinez(beta, x.data)
+  r <- sum((y - B)^2) + pen
+  return(r)
+}
+
+R(beta.start)
+err.val <- matrix(data = NA, nrow= 100, ncol = 2)
+lam <- seq(from = 0.001, to = 0.0001, by = -0.00001) 
+
+for(j in 1:99){
+  lambda <- lam[j]
+  t.knots <- nlm(R,rep(1,24))$minimum
+  err.val[j,] <- c(t.knots,lambda)
+  cat(j,t.knots,lambda,"\n")
+}
+
+err.val <- err.val[1:91,]
+plot(x = err.val[,2], y = err.val[,1], type = "l", main = "Problem 3", ylab = "Error", xlab = "Lambda Value")
+##lambda 0.00023 
+
+##run R function to find betas using appropriate lambda
+lambda <- 0.00023
+b <- nlm(R,(rep(1,24)))$estimate
+
+
+scatter.smooth(female_data, col = "red", main = "Female Data 20 knots", ylab = "Bone Density", xlab = "Age")
+loess.smooth(x = splinez(beta = b, x = female_data[,2]), y = female_data[,2])
+legend("topright", c("Data", "Spline"), col = c("red","black"), lty = c(1,1))
