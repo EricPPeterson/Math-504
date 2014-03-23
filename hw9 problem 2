@@ -1,5 +1,12 @@
 ##problem 2
 ##part b
+##math 504
+##hw9
+##problem 2
+BoneMassData <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW9/BoneMassData.txt", header=T, quote="\"")
+male_data <- BoneMassData[BoneMassData[,3]=='male',c(2,4)]
+female_data <- BoneMassData[BoneMassData[,3]=='female',c(2,4)]
+
 
 spliney <- function(beta,x){
   kn <- c(15,20)
