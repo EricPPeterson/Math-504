@@ -48,3 +48,17 @@ legend("topright", c("Data", "Spline"), col = c("red","black"), lty = c(1,1))
 scatter.smooth(male_data, col = "blue", main = "Male Data", ylab = "Bone Density", xlab = "Age")
 loess.smooth(x = spliney(beta = b.male, x = x.data), y = male_data[,2])
 legend("topright", c("Data", "Spline"), col = c("red","black"), lty = c(1,1))
+
+> fem 
+$minimum [1] 0.371049
+$estimate [1]  0.988870841  0.870251020 -0.110404026  0.003309953 -0.005764320  0.002600863
+$gradient [1] -4.223935e-07 -1.825415e-06  9.687744e-05  4.052755e-03 -1.133109e-04 -5.712486e-04
+$code [1] 2
+$iterations [1] 24
+
+> male 
+$minimum [1] 0.388218
+$estimate [1]  0.988874964  0.870297173 -0.110066827  0.003294850 -0.005756805  0.002678925
+$gradient [1] -1.132444e-06 -8.255528e-06  4.930020e-05  4.013720e-03  4.472725e-05  2.086252e-04
+$code [1] 2
+$iterations [1] 24
