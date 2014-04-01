@@ -14,14 +14,17 @@ Riemann <- function(a,b,n){
 }
 
 Trap <- function(a,b,n){
+  x <- seq(from = a, to = b, by = (b-a)/n)
+  g <- x[1]
+  w <- x[n+1]
+  x <- x[2:n]
   del.x <- (b-a)/n
-  x <- rep(NA,n-1)
-  for(j in 1:(n-1)) x[j] <- (f(a + del.x*j) + f(a + del.x*(j+1)))
-  out <- (sum(x) * del.x)/2
+  out.1 <- 2 * f(x)
+  out <- (del.x/2) * (f(g) + sum(out.1) + f(w)) 
   return(out)
 }
 
-Fapprox <- function(a,b,n,method = "riemann"){
+Fapprox <- function(a = 0,b = 1,n = 100,method = "riemann"){
   if(method == "riemann"){
     int <- Riemann(a,b,n)  
   }
@@ -36,33 +39,17 @@ Fapprox <- function(a,b,n,method = "riemann"){
   return(int)
 }
 
-Fapprox(0,10,10,method = "riemann")
-Fapprox(0,10,100,method = "riemann")
-Fapprox(0,10,1000,method = "riemann")
-Fapprox(0,10,10000,method = "riemann")
+Fapprox(0,4,10,method = "riemann")
+Fapprox(0,4,100,method = "riemann")
+Fapprox(0,4,1000,method = "riemann")
+Fapprox(0,4,10000,method = "riemann")
 
-#[1] 0.5199471
-#[1] 0.5019947
-#[1] 0.5001995
-#[1] 0.5000199
-
-Fapprox(0,10,10,method = "trapezoid")
-Fapprox(0,10,100,method = "trapezoid")
-Fapprox(0,10,1000,method = "trapezoid")
-Fapprox(0,10,10000,method = "trapezoid")
-
-#[1] 0.1795435
-#[1] 0.4602053
-#[1] 0.4960107
-#[1] 0.4996011
-
+Fapprox(0,4,10,method = "trapezoid")
+Fapprox(0,4,100,method = "trapezoid")
+Fapprox(0,4,1000,method = "trapezoid")
+Fapprox(0,4,10000,method = "trapezoid")
 
 Fapprox(0,10,10,method = "R")
 Fapprox(0,10,100,method = "R")
 Fapprox(0,10,1000,method = "R")
 Fapprox(0,10,10000,method = "R")
-
-#0.5 with absolute error < 3.7e-05
-#0.5 with absolute error < 3.7e-05
-#0.5 with absolute error < 3.7e-05
-#0.5 with absolute error < 3.7e-05
