@@ -1,0 +1,38 @@
+##Math 504
+##HW 11
+##problem 2
+
+f <- function(x){
+  return(1/sqrt(2*pi) * (exp(-x^2/2)))
+}
+
+Riemann <- function(a,b,n){
+  lim <- seq(from = a, to = b, by = 1/n)
+  del.x <- lim[2]
+  out <- sum(f(lim)*del.x)
+  return(out)
+}
+
+Trap <- function(a,b,n){
+  lim <- seq(from = a, to = b, by = 1/n)
+  del.x <- lim[2]
+  x <- rep(NA,n-1)
+  for(j in 1:(n-1)) x[j] <- (f(lim[j]) + f(lim[j+1])) * del.x
+  out <- sum(x)/2
+  return(out)
+}
+
+Fapprox <- function(a,b,n,method = "reimann"){
+  if(method == "reimann"){
+    int <- Riemann(a,b,n)  
+  }
+  
+  if(method == "trapezoid"){
+    int <- Trap(a,b,n)
+  }
+  
+  if(method == "R"){
+    int <- integrate(f = f, lower = a, upper = b, subdivisions = n)
+  }
+  return(int)
+}
