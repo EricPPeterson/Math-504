@@ -8,7 +8,7 @@ f <- function(x){
 
 Riemann <- function(a,b,n){
   lim <- seq(from = a, to = b, by = 1/n)
-  del.x <- lim[2]
+  del.x <- lim[2] - lim[1]
   out <- sum(f(lim)*del.x)
   return(out)
 }
