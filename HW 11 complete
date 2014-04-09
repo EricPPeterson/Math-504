@@ -1,0 +1,247 @@
+##Math 504
+##HW 11
+##problem 2
+
+f <- function(x){
+  return(1/sqrt(2*pi) * (exp(-x^2/2)))
+}
+
+Riemann <- function(a,b,n){
+  lim <- seq(from = a, to = b, by = 1/n)
+  del.x <- lim[2] - lim[1]
+  out <- sum(f(lim)*del.x)
+  return(out)
+}
+
+Trap <- function(a,b,n){
+  x <- seq(from = a, to = b, by = (b-a)/n)
+  g <- x[1]
+  w <- x[n+1]
+  x <- x[2:n]
+  del.x <- (b-a)/n
+  out.1 <- 2 * f(x)
+  out <- (del.x/2) * (f(g) + sum(out.1) + f(w)) 
+  return(out)
+}
+
+Fapprox <- function(a = 0,b = 1,n = 100,method = "riemann"){
+  if(method == "riemann"){
+    int <- Riemann(a,b,n)  
+  }
+  
+  if(method == "trapezoid"){
+    int <- Trap(a,b,n)
+  }
+  
+  if(method == "R"){
+    int <- integrate(f = f, lower = a, upper = b, subdivisions = n)
+  }
+  return(int)
+}
+
+Fapprox(0,4,10,method = "riemann")
+Fapprox(0,4,100,method = "riemann")
+Fapprox(0,4,1000,method = "riemann")
+Fapprox(0,4,10000,method = "riemann")
+
+Fapprox(0,4,10,method = "trapezoid")
+Fapprox(0,4,100,method = "trapezoid")
+Fapprox(0,4,1000,method = "trapezoid")
+Fapprox(0,4,10000,method = "trapezoid")
+
+Fapprox(0,10,10,method = "R")
+Fapprox(0,10,100,method = "R")
+Fapprox(0,10,1000,method = "R")
+Fapprox(0,10,10000,method = "R")
+
+
+##problem 3
+require(Matrix)
+p = 0.01
+GRN <- read.delim("C:/Users/eric/Desktop/GTown Stats/math 504/HW11/General_Relativity_Network.txt")
+A <- as.matrix(table(GRN[,1],GRN[,2]))
+A <- Matrix(A)
+
+B <- function(p,mat){
+  X <- rowSums(mat)
+  B1 <- (1-p) * mat
+  
+  for(k in 1:nrow(A)){
+    if(X[k] != 0) {
+      B1[,k] = B1[,k] * 1/X[k]
+    }
+  }
+  
+  B2 <-  matrix(data = 1, nrow = nrow(B1), ncol = ncol(B1))
+  B2 <- p * (1/nrow(B2)) * B2
+  B <- B1 + B2  
+  
+  return(B)
+}
+
+matty.B <- as.matrix(B(p = p, mat = A))
+
+power.iter <- function(p,mat,eps,u){
+  j = 1
+  mat.B <- B(p,mat)
+  lambda <- as.numeric((t(u) %*% mat %*% u) / ((sum(u^2))^(.5)))
+  
+  while(((sum((mat.B %*% u - lambda * u)^2))^(1/2)) > eps){
+    u <- mat.B %*% u
+    u <- u/norm(u, type = "F")
+    lambda <- as.numeric((t(u) %*% mat.B %*% u)/ ((sum(u^2))))
+    cat(((sum((mat.B %*% u - lambda * u)^2))^(1/2)),"\n")
+    j = j + 1
+  }
+  highest.node <- which(abs(u) == max(abs(u)))
+  return(list(v = u,lambda.max = lambda,iter = j, hn = highest.node))
+}
+
+u <- matrix(rnorm(nrow(matty.B), mean = 0, sd = 1), ncol = 1)
+
+power_iteration <- power.iter(0.15,matty.B,.1,u)
+power_iteration$lambda.max
+power_iteration$iter
+power_iteration$hn
+
+
+p_loop <- seq(from = .01, to = .35, by = .01)
+collect.vals <- matrix(data = NA, ncol = 5, nrow = length(p_loop))
+
+for (k in 1:length(p_loop)){
+  start <- Sys.time()
+  power_iteration <- power.iter(p_loop[k],matty.B,eps = 1e-3,u)
+  total.time <- Sys.time() - start
+  collect.vals[k,] <- c(p_loop[k],power_iteration$hn, total.time,power_iteration$lambda.max,power_iteration$iter) 
+}
+
+colnames(collect.vals) <- c("PValue", "HighestNode","TotalTime","LambdaMax","Iterations")
+write.csv(collect.vals, "C:/Users/eric/Desktop/GTown Stats/math 504/HW11/collectvals.csv")
+
+##part b
+##find eigenvalues
+C <- matty.B
+I <- diag(1,nrow(matty.B),ncol(matty.B))
+s <- 0.15
+tol <- 1e-14
+lam <- rep(NA,)
+n <- nrow(matty.B)
+j = 1
+
+while(n > 1){
+  while(max(abs(C[n,1:(n-1)])) > tol){
+    new.mat <- C - s*I
+    new.mat.2 <- qr(new.mat)
+    C <- new.mat.2$qr + (s*I)
+    j = j + 1
+    cat(j,max(abs(C[n,1:(n-1)])),"\n")
+  }
+  lam[n] <- C[n,n]
+  n <- n - 1
+  C <- C[1:n,1:n]
+  cat(n,"\n")
+}
+
+##problem 4
+## part a
+NL <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW11/non_linear_1(2).txt", header=T, quote="\"")
+
+f <- function(beta,x_values){
+  exp1 <- exp(-beta[2] * x_values)
+  exp2 <- exp(-(x_values - beta[4])^2 / (beta[5]^2) )
+  exp3 <- exp(-(x_values - beta[7])^2 / (beta[8]^2))
+  
+  t.1 <- beta[1] * exp1
+  t.2 <- beta[3] * exp2
+  t.3 <- beta[6] * exp3
+  out <- t.1 + t.2 + t.3
+  return(out)
+}
+
+E <- function(beta,x_values,y_values){
+  f.x <- f(beta,x_values)
+  out <- (y_values - f.x)^2
+  return(sum(out))
+}
+
+x.val <- NL[,2]
+y.val <- NL[,1]
+b <- c(1,1,1,1,1,1,1,1)
+f.x <- f(b,x.val)
+e.error <- E(b,x.val,y.val)
+
+
+Mygradient <- function(f,x,h = 1e-10,...){
+  n <- length(x)
+  grad <- rep(NA,n)
+  grad[1] <- f(c(x[1] + h,x[2:n]),...) - f(x,...)
+  grad[n] <- f(c(x[1:(n-1)],x[n] + h),...) - f(x,...)
+  
+  for(i in 2:(n-1)){
+    grad[i] <- f(c(x[1:(i-1)], x[i] + h, x[(i+1):n]),...) - f(x,...)
+  }
+  
+  return(grad/h)
+}
+
+grad <- Mygradient(E,b,h = 1e-10,x.val,y.val)
+
+##part b
+require(rootSolve)
+
+modNM <- function(x,y,b,eps = 1e-10){
+  e.error <- E(b,x.val,y.val)
+  grad <- Mygradient(E,b,h = 1e-10,x.val,y.val)
+  Normy <- norm(as.matrix(grad),type = "F")
+  hess <- hessian(f = E,x = b,x_values = x.val,y_values = y.val)
+
+  k = 0
+  
+  while(Normy >= eps){
+    k <- k + 1
+    d <- -solve(hess,grad)
+    
+    alpha <- 1
+    
+    if(d %*% grad < 0){
+      b.new <- b + alpha * d
+      E.new <- E(b.new,x.val,y.val)
+      
+      while(E.new > e.error){
+        alpha <- alpha/2
+        b.new <- b + alpha*d
+        E.new <- E(b.new,x.val,y.val)
+      }
+    
+      } else {
+      d <- -grad / Normy
+      b.new <- b + alpha * d
+      E.new <- E(b.new,x.val,y.val)
+      
+      while(E.new > e.error){
+        alpha <- alpha/2
+        b.new <- b + alpha * d
+        E.new <- E(b.new,x.val,y.val)
+      }
+    }
+    
+    if(e.error - E.new < eps){
+      cat("Algorithm converged.")
+      cat("Total Iterations:", k)
+      return(b.new)
+    }
+    b <- b.new 
+    e.error <- E(b,x.val,y.val)
+    grad <- Mygradient(E,b,h = 1e-10,x.val,y.val)
+    Normy <- norm(as.matrix(grad), type = "F")
+    hess <- hessian(f = E,x = b,x_values = x.val,y_values = y.val)
+    
+  }
+  return(list(beta = beta, iter = k))
+}
+
+start.pt <- c(96,.009,103,106,18,72,151,18)
+beta <- modNM(x,y,start.pt)
+#Algorithm converged.Total Iterations: 12
+#[1]  99.01830418   0.01099494 101.88022080 107.03094938  23.57858062  72.04558460
+#[7] 153.27009457  19.52597168
