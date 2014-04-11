@@ -1,0 +1,93 @@
+##problem 3
+##9985 x 563 matrix
+US <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW12/user-shows.txt", quote="\"")
+REDUX <- svd(US)
+U.red <- as.matrix(REDUX$u[,1:2])
+D.red <- REDUX$d[1:2]
+D.mat <- matrix(data = c(D.red[1],0,0,D.red[2]),nrow = 2, ncol = 2)
+V.red <- as.matrix(REDUX$v[1:2,], ncol = 2)
+U.S <- U.red %*% D.mat
+V.S <- t(V.red) %*% D.mat
+
+plot(U.S, xlab = "column 1", ylab = "column 2", type = "p", main = "U Matrix Reduction in 2 dimensions", col = "blue")
+plot(V.S, xlab = "column 1", ylab = "column 2", type = "p", main = "V Matrix Reduction in 2 dimensions", col = "green")
+plot(REDUX$d, type = "p", main = "S values", ylab = "Magnitude")
+
+
+##use euclidean distance between all other people and Alex
+euc.dist <- function(x,y){
+  r <- x[y,]
+  d <- rep(NA, nrow(x))
+  for (j in 1:length(d)){
+    d[j] <- dist(rbind(x[j,],r))    
+  }
+  return(d)
+}
+
+dist <- euc.dist(U.S,500)
+sort.dist <- sort(dist)
+h.sort <- sort.dist[2:12]
+plot(h.sort, main = "Sort of Distance from Alex", xlab = "Person", ylab = "Distance")
+##maybe a break at 5.  Use first 5
+h.sort <- sort.dist[2:6]
+comp <- rep(NA, length(h.sort))
+
+for (k in 1:length(h.sort)){
+  comp[k] <- which(dist == h.sort[k])
+}  
+per <- US[comp,1:100]
+per.choice <- which(per == 1)
+c.sums <- colSums(per)
+c.sums.4 <- which(c.sums >= 4)
+alex <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW12/alex.txt", quote="\"")
+alex[c.sums.4]
+##  V44 V61 V64
+##1   1   0   1
+
+c.sums.3<- which(c.sums == 3)
+##V36 V66 V73 V82 V83 V89 V97 
+##36  66  73  82  83  89  97
+## seven options(need to pull out best 2)
+## which two are closest to tv shows 44 and 64
+dist.mv <- euc.dist(V.S,44)
+sort.dist.mv <- sort(dist.mv)
+h.sort.mv <- sort.dist.mv[2:12]
+comp.mv <- rep(NA, length(h.sort.mv))
+
+for (k in 1:length(h.sort.mv)){
+  comp.mv[k] <- which(dist.mv == h.sort.mv[k])
+}  
+##distance wise, 432 and 302 were used, due to similarity with movies which 
+##received 4 ones from people similar to alex.
+alex[comp.mv]
+##V432 V302 
+##  1    0
+## final recs for alex = 44, 61, 64 302, 432
+## 3 alex liked, 2 he didn't.
+
+
+##more dimensions
+REDUX <- svd(US)
+##use every singular value > 100
+U.red <- as.matrix(REDUX$u[,1:5])
+D.red <- REDUX$d[1:5]
+D.mat <- diag(D.red)
+V.red <- as.matrix(REDUX$v[1:5,], ncol = 2)
+U.S <- U.red %*% D.mat
+V.S <- t(V.red) %*% D.mat
+
+dist <- euc.dist(U.S,500)
+sort.dist <- sort(dist)
+h.sort <- sort.dist[2:11]
+
+comp <- rep(NA, length(h.sort))
+
+for (k in 1:length(h.sort)){
+  comp[k] <- which(dist == h.sort[k])
+}  
+
+per <- US[comp,1:100]
+per.choice <- which(per == 1)
+c.sums <- colSums(per)
+c.sums.4 <- which(c.sums >= 6)
+alex[c.sums.4]
