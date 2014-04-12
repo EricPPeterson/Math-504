@@ -1,0 +1,18 @@
+##part i
+require(lattice)
+require(ggplot2)
+
+myPCA <- function(D,n = 2){
+  cov.eig <- eigen(cov(D))$values
+  cov.vecs <- eigen(cov(D))$vectors
+  sub.eig <- cov.eig[1:n]
+  sub.vecs <- cov.vecs[,1:n]
+  data <- as.matrix(D) %*% as.matrix(sub.vecs)
+  return(list(vals = sub.eig, vecs = sub.vecs, points = data))
+}
+
+comps <- as.data.frame(myPCA(iris[,1:4], n = 2)$points)
+plot(comps, col = ifelse(comps[,1] < 4, 'red', 'green'), pch = ifelse(comps[,1] < 4, 1,3),main = "Iris Data Plotted on 2 Principal Components", ylab = "Component 2", xlab = "Component 1")
+
+##part ii
+PCA.vals <- princomp(iris[,1:4])
