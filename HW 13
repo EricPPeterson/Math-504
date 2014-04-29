@@ -1,0 +1,228 @@
+##math 504
+##hw 13
+##problem 1
+##part a
+require(lattice)
+require(plot3d)
+require(akima)
+require(rgl)
+
+A <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW 13/A.csv", header=F)
+A <- as.matrix(A)
+
+c <- c(0.806, 0.517, 0.100, 0.908, 0.965, 0.669, 0.524, 0.902, 0.531, 0.876, 0.462, 
+       0.491, 0.463, 0.714, 0.352, 0.869, 0.813, 0.811, 0.828, 0.964, 0.789, 0.360,
+       0.369, 0.992, 0.332, 0.817, 0.632, 0.883, 0.608, 0.326)
+x <- seq(from = -10, to = 10, by = .1)
+
+f <- function(x){
+  n <- length(x)
+  f.x <- rep(NA,nrow(A))
+  YMAT <- expand.grid(x = x, y = x)
+  Z <- matrix(data = NA, nrow = nrow(YMAT), ncol = 1)
+  YMAT <- cbind(YMAT,Z)
+  cat(nrow(YMAT))
+  
+  for(k in 1:nrow(YMAT)){
+    
+    for (j in 1:nrow(A)){
+      one <- YMAT[k,1] - A[j,1]
+      two <- YMAT[k,2] - A[j,2]
+      f.x[j] <- 1/((one + two)^2 + c[j])
+    } 
+    YMAT[k,3] <- sum(f.x)
+    cat(k,"\n")
+  }
+  return(YMAT)
+}
+
+Y <- f(x)
+colnames(Y) <- c("x1","x2","z")
+attach(Y)
+wireframe(z~x1*x2,Y, shade = T, aspect = c(1,1))
+plot3d(z, x1, x2, col="blue", size = 3)
+
+##part b
+g <- function(x,y){
+  col.vals <- rep(NA,nrow(A))
+  
+  for (j in 1:nrow(A)){
+    one <- x - A[j,1]
+    two <- y - A[j,2]
+    col.vals[j] <- 1/((one + two)^2 + c[j])
+  }
+  return(sum(col.vals))
+}
+
+
+##select function
+Points <- function(x.1){
+  ## calc the function over the vector of X's using mapply
+  out.1 <- mapply(g,x.1[,1],x.1[,2])
+
+  ##create fitness func
+  prob.1 <- out.1/sum(out.1)
+
+  ##sample points from original X's using fitness as prob dist.
+  x.out <- sample(1:size,size,replace = T, prob = prob.1)
+  x.select <- x.1[x.out,]
+  return(list(x = x.select, f.x = out.1))
+}
+
+##change function
+Metamorphose <- function(x,mu = 0.3,sigma = 0.1){
+  U <- runif(nrow(x))
+  Z <- matrix(NA, nrow = nrow(x), ncol = ncol(x))
+  
+  for(run in 1:nrow(x)){
+    if(U[run] < (1-mu)){
+      Z[run,] <- x[run,]
+    } else {
+      noise <- matrix(data = rnorm(n = nrow(x), mean = 0, sd = sigma), nrow = 1, ncol = ncol(x))
+      Z[run,] <- x[run,] + noise
+    }
+  }
+  return(Z)
+}
+
+##combination function
+Combo <- function(Z,r = .5){
+  U <- runif(nrow(Z))
+  X <- matrix(NA, nrow = nrow(Z), ncol = ncol(Z))
+  lambda <- runif(nrow(Z))
+  
+  for (loop in 1:nrow(Z)){
+    if(U[loop] < (1-r)){
+      X[loop,] <- Z[loop,]
+    } else {
+      X[loop,] <- lambda[loop]*Z[loop,] + (1-lambda[loop])*Z[loop,]
+    }
+  }
+  return(X)
+}
+
+##set initial values
+size <- 50
+x.1 <- cbind(rnorm(size),rnorm(size))
+old <- -1000
+new <- -500
+old.pt <- c(-100,-100)
+max.iter <- c()
+running.max <- matrix(data = c(old, old.pt[1],old.pt[2]), nrow = 1)
+iter <- 1
+
+while(iter < 500){
+  
+  ##run genetic Algo
+  out.1 <- Points(x.1)
+  Z <- Metamorphose(out.1$x)
+  x.1 <- Combo(Z) 
+  
+  ##collect max values
+  max.pt <- which(out.1$f.x == max(out.1$f.x))
+  mx <- x.1[max.pt,]
+  max.iter <- rbind(max.iter,c(max(out.1$f.x),mx))
+  
+  if (max(out.1$x) >= running.max[iter,1]){
+    running.max <- rbind(running.max,c(max(out.1$x),mx))
+  } else {
+    running.max <- rbind(running.max,c(old,old.pt))
+  }
+    
+  ##reset values, etc.
+  new <- old
+  old <- max(out.1$f.x)
+  old.pt <- mx
+  iter <- iter + 1
+  cat(abs(new - old), iter, "\n")
+}
+
+colnames(running.max) <- c('max.value','pt.1','pt.2')
+colnames(max.iter) <- c('max.value','pt.1','pt.2')
+
+plot(running.max[2:500,1], type = "l", main = "Running Max, Genetic Algo", xlab = "Run", ylab = "Value")
+plot(max.iter[2:499,1], type = "l", main = "Max Iteration, Genetic Algo", xlab = "Run", ylab = "Value")
+
+
+##problem 4
+require(glmnet)
+prostate <- read.table("C:/Users/eric/Desktop/GTown Stats/math 504/HW 13/prostate.txt", header=T, quote="\"")
+
+##part a
+train <- which(prostate$train == "TRUE")
+test <- which(prostate$train == "FALSE")
+train.set <- prostate[train,]
+test.set <- prostate[test,]
+
+##set train predictors and targets
+train.pred <- as.matrix(train.set[,-c(9:10)])
+train.tar <- as.matrix(train.set[,9])
+test.pred <- as.matrix(test.set[,-c(9:10)])
+test.tar <- as.matrix(test.set[,9])
+
+
+##first regression
+lm.train <- lm(train.pred ~., train.tar, data = prostate)
+lm.train
+
+##predict test set
+pts <- predict(lm.train, as.data.frame(test.pred))
+##MSE result
+SSE <- sum(test.tar - pts)^2 ##1098.883
+MSE <- SSE/length(pts)
+MSE #36.62
+
+##part b
+ridge <- glmnet(train.pred, train.tar,alpha = 0)
+plot(ridge)
+pts.ridge <- predict(ridge,test.pred)
+ridge.SSE <- apply(pts.ridge, 2, function(i) sum((i - train.tar)^2))
+plot(ridge$lambda, ridge.SSE, main = "SSE for Ridge Regression vs. lambda used", ylab = "SSE", xlab = "lambda")
+
+##part c
+lass <- glmnet(train.pred, train.tar,alpha = 1)
+plot(lass)
+pts.lass <- predict(lass, test.pred)
+lasso.SSE <- apply(pts.lass, 2, function(i) sum((i - train.tar)^2))
+plot(lass$lambda, lasso.SSE, main = "SSE for Lasso Regression vs. lambda used", ylab = "SSE", xlab = "lambda")
+
+##part d
+##both ridge and lasso improved SSE/MSE.  In both cases, as lambda was made smaller
+## the regression fit improved. For lasso, this effect 'bottomed out' around
+## lambda = 0.013.  
+
+
+##part e
+A <- as.matrix(prostate[,c(1,2)])
+y <- as.matrix(prostate[,9])
+
+FindBeta <- function(t){
+  nodes <- 2*t/100
+  b1 <- b2 <- seq(from=-t,to=t,by=nodes)
+  grid <- as.matrix(expand.grid(b_lcavol=b1,b_lweight=b2))
+  grid <- grid[rowSums(abs(grid)) <= t,]
+  n <- nrow(grid)
+  
+  min_error <- sum( (A%*%grid[1,] - y)^2 )
+  b <- grid[1,]
+  
+  for(i in 2:n){
+    error <- sum( (A%*%grid[i,] - y)^2 )
+    if(error <= min_error){
+      b <- grid[i,]
+      min_error <- error
+    }
+  }
+  return(b)  
+}
+
+my_coeffs <- lasso2_coeffs <- matrix(NA,nrow=100,ncol=2)
+for(i in 1:100){
+  my_coeffs[i,] <- FindBeta(.05*i)
+  fit<- l1ce(lpsa~lcavol+lweight,data=prostate,bound=.05*i,absolute.t=TRUE)
+  lasso2_coeffs[i,] <- coefficients(fit)[-1]
+}
+
+plot(my_coeffs,xlim=c(0,0.8),ylim=c(0,1),xlab="",ylab="",pch="x")
+par(new=T)
+plot(lasso2_coeffs,xlim=c(0,0.8),ylim=c(0,1),xlab="b_lcavol",ylab="b_lweight")
