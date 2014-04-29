@@ -1,0 +1,16 @@
+##final
+##problem 1
+##part b
+require(boot)
+
+arg.1 <- c(25,20)
+ST.1 <- c(20,12)
+ST.2 <- c(1,1)
+arg.2 <- rbind(ST.1,ST.2)
+RT.1 <- rbind(1800,120)
+ST.3 <- c(1,0)
+ST.4 <- c(1,0)
+arg.3 <- rbind(ST.3,ST.4)
+RT.2 <- rbind(0,0)
+
+X <- simplex(a = arg.1, A1 = arg.2, b1 = RT.1, A2 = arg.3, b2 = RT.2, maxi = T)
