@@ -14,3 +14,38 @@ arg.3 <- rbind(ST.3,ST.4)
 RT.2 <- rbind(0,0)
 
 X <- simplex(a = arg.1, A1 = arg.2, b1 = RT.1, A2 = arg.3, b2 = RT.2, maxi = T)
+
+
+##problem 2
+##part a
+require(quadprog)
+iris <- read.csv("C:/Users/eric/Desktop/GTown Stats/math 504/HW12/iris.txt", header=F)
+y <- matrix(iris[,5])
+x <- t(iris[,1:4])
+b0 <- matrix(data = 1, nrow = 1, ncol = 100)
+b <- matrix(data = 1,nrow = 1, ncol = 5)
+Dmat <- diag(5)
+dvec <- matrix(rep(0,5),5,1)
+vec.1 <- rep(1,nrow(y)) 
+Amat <- cbind(vec.1,iris[,1:5])
+
+for(j in 1:nrow(Amat)){
+  Amat[j,] <- y[j,] * Amat[j,]  
+}
+bvec <- matrix(data = 1, nrow = 1, ncol = 100)
+meq <- 0
+
+ans <- solve.QP(Dmat = Dmat, dvec = dvec, Amat = t(Amat[,1:5]), bvec = bvec, meq = 0)
+sol <- ans$solution[-1]
+
+n <- length(sol)
+rob_basis <- matrix(rnorm(n^2), nrow = n, ncol = n)
+rob_basis[,1] <- sol
+Q <- qr.Q(qr(rob_basis))
+
+# hyperplane span
+# basis = Q[,2:4] 
+
+projection <- Q[,1:2] 
+proj <- t(x) %*% projection
+plot(proj, pch = ifelse(proj[,1] < 0,1,3), col = ifelse(proj[,1] < 0, "blue", "red"), main = "Projected Basis", ylab = "2nd dimension", xlab = "1st dimension")  
