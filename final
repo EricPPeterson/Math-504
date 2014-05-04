@@ -52,7 +52,7 @@ dvec <- matrix(rep(0,5),5,1)
 
 ## combine vector of ones (b0) with x attributes
 vec.1 <- rep(1,nrow(y)) 
-Amat <- cbind(vec.1,iris[,1:5])
+Amat <- cbind(vec.1,iris[,1:4])
 
 ##multiply each row by y's to complete the constraint
 for(j in 1:nrow(Amat)){
