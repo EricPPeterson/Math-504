@@ -1,0 +1,25 @@
+#part c
+require(randomForest)
+
+##set training and test sets
+set.seed(123)
+resp <- phoneme$g
+predictors <- phoneme[,1:256]
+n <- nrow(predictors)
+train <- sample(n, n*0.8)
+train.resp <- resp[train]
+train.predictors <- predictors[train,]
+colnames(train.predictors) <- 1:256
+test.resp <- phoneme[-train,257]
+test.predictors <- phoneme[-train,-257]
+colnames(test.predictors) <- 1:256
+
+rand.for <- randomForest(x = train.predictors, y = train.resp, importance = TRUE)
+preds <- predict(rand.for,test.predictors)
+table(preds == test.resp)
+#FALSE  TRUE 
+#  59   843
+##843/(843+59) = .9346
+
+##confusion matrix
+confusionMatrix(preds, test.resp)
