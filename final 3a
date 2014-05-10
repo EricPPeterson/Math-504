@@ -1,0 +1,67 @@
+##problem 3
+set.seed(1)
+require(ElemStatLearn)
+require(reshape2)
+require(caret)
+require(e1071)
+table(phoneme[,257])
+
+##create random samples to break into test and training
+target <- phoneme$g
+preds <- phoneme[,1:256]
+n <- nrow(preds)
+train <- sample(n, n*0.8)
+train.tar <- target[train]
+train.preds <- preds[train,]
+colnames(train.preds) <- 1:256
+test.set <- preds[-train,]
+
+##further break training test into indvidual sounds
+aa <- train.preds[train.tar == "aa",]
+ao <- train.preds[train.tar == "ao",]
+dcl <- train.preds[train.tar == "dcl",]
+iy <- train.preds[train.tar == "iy",]
+sh <- train.preds[train.tar == "sh",]
+
+##melt df into 2 col df's 
+aa.melt <- melt(aa)
+spline.aa <- smooth.spline(aa.melt, nknots=256)
+ao.melt <- melt(ao)
+spline.ao <- smooth.spline(ao.melt, nknots=256)
+sh.melt <- melt(sh)
+spline.sh <- smooth.spline(sh.melt, nknots=256)
+iy.melt <- melt(iy)
+spline.iy <- smooth.spline(iy.melt, nknots=256)
+dcl.melt <- melt(dcl)
+spline.dcl <- smooth.spline(dcl.melt, nknots=256)
+
+spline.mod = list(
+  spline.aa, 
+  spline.ao, 
+  spline.sh, 
+  spline.iy, 
+  spline.dcl
+)
+
+spline.fits = lapply(spline.mod, function(mod) predict(mod, 1:256)$y)
+
+
+spline.class = function(x){
+  # classify from the matrix into one of the five sounds.  
+  MSE = sapply(spline.fits, function(v) mean((v-x)^2))
+  classify = c('aa','ao','sh','iy','dcl')
+  classify[which.min(MSE)]
+}
+
+
+# apply classifier over each record of test set, build confusion matrix.
+
+spline.preds <- apply(test.set,1, spline.class)
+table(spline.preds == target[-train])
+##802 correct
+##100 wrong
+##.8891 correct
+
+# confusion matrix
+test <- target[-train]
+confusionMatrix(spline.preds, test)
