@@ -76,9 +76,12 @@ dE <- function(mat){
   y.mat <- matrix(data = y.dist, nrow = 3, byrow = T)
   z.mat <- matrix(data = z.dist, nrow = 3, byrow = T)
   
-  dX <- function (i) {(-12 * r.mat[i,1]^-14 * x.mat[i,1]) + (12 * r.mat[i,1]^-8 * x.mat[i,1]) - (12 * r.mat[i,2]^-14 * x.mat[i,2]) + (12 * r.mat[i,2]^-8 * x.mat[i,2])}
-  dY <- function (i) {(-12 * r.mat[i,1]^-14 * y.mat[i,1]) + (12 * r.mat[i,1]^-8 * y.mat[i,1]) - (12 * r.mat[i,2]^-14 * y.mat[i,2]) + (12 * r.mat[i,2]^-8 * y.mat[i,2])}
-  dZ <- function (i) {(-12 * r.mat[i,1]^-14 * z.mat[i,1]) + (12 * r.mat[i,1]^-8 * z.mat[i,1]) - (12 * r.mat[i,2]^-14 * z.mat[i,2]) + (12 * r.mat[i,2]^-8 * z.mat[i,2])}  
+  dX <- function (i) {(-12 * r.mat[i,1]^-14 * x.mat[i,1]) + (12 * r.mat[i,1]^-8 * x.mat[i,1]) - 
+  	(12 * r.mat[i,2]^-14 * x.mat[i,2]) + (12 * r.mat[i,2]^-8 * x.mat[i,2])}
+  dY <- function (i) {(-12 * r.mat[i,1]^-14 * y.mat[i,1]) + (12 * r.mat[i,1]^-8 * y.mat[i,1]) - 
+  	(12 * r.mat[i,2]^-14 * y.mat[i,2]) + (12 * r.mat[i,2]^-8 * y.mat[i,2])}
+  dZ <- function (i) {(-12 * r.mat[i,1]^-14 * z.mat[i,1]) + (12 * r.mat[i,1]^-8 * z.mat[i,1]) - 
+  	(12 * r.mat[i,2]^-14 * z.mat[i,2]) + (12 * r.mat[i,2]^-8 * z.mat[i,2])}  
   
   d.x <- sapply(1:nrow(x.mat), dX)
   d.y <- sapply(1:nrow(y.mat), dY)
@@ -370,7 +373,8 @@ dB <- function(b){
   for (j in 1:7){
   Q <- p2b[,j]
   if (j == 7){Q = rep(1,nrow(p2b))}
-  N <- function(i) {-2 *  (B[i] - A1[i] * b[1] - A2[i] * b[2] - A3 * b[3] - A4 * b[4] - A5 * b[5] - A6 * b[6] - b[7]) * Q[i]
+  N <- function(i) {-2 *  (B[i] - A1[i] * b[1] - A2[i] * b[2] - A3 * b[3] - A4 * b[4] - A5 * b[5] - 
+  	A6 * b[6] - b[7]) * Q[i]
   }
   n <- nrow(p2b)
   out[j] <- sum(sapply(1:n,N))
